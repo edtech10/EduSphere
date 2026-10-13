@@ -205,6 +205,9 @@ export function buildSeedDatabase(): Database {
   // Enrollments
   const enrollments: Database['enrollments'] = [
     { id: 'enr_001', studentId: 'stu_demo', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
+    { id: 'enr_001b', studentId: 'stu_demo', trackId: 'track_phleb', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(40), status: 'active' },
+    { id: 'enr_001c', studentId: 'stu_demo', trackId: 'track_cla', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(38), status: 'active' },
+    { id: 'enr_001d', studentId: 'stu_demo', trackId: 'track_amt', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(35), status: 'active' },
     { id: 'enr_002', studentId: 'stu_nv_02', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
     { id: 'enr_003', studentId: 'stu_nv_03', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(44), status: 'active' },
     { id: 'enr_004', studentId: 'stu_nv_04', trackId: 'track_phleb', orgId: 'org_northview', assignedBy: 'user_nv_inst2', assignedAt: daysAgo(40), status: 'active' },
@@ -227,6 +230,21 @@ export function buildSeedDatabase(): Database {
   const progress: Database['progress'] = [
     {
       studentId: 'stu_demo', trackId: 'track_ma',
+      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
+      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
+    },
+    {
+      studentId: 'stu_demo', trackId: 'track_phleb',
+      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
+      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
+    },
+    {
+      studentId: 'stu_demo', trackId: 'track_cla',
+      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
+      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
+    },
+    {
+      studentId: 'stu_demo', trackId: 'track_amt',
       completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
       topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
     },
