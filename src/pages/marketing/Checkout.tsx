@@ -36,7 +36,7 @@ export default function Checkout() {
 
   const orgId = user?.orgId ?? ''
   const org = db.organizations.find((o) => o.id === orgId)
-  const concreteTracks = db.tracks.filter((t) => !t.isBundle)
+  const concreteTracks = db.tracks.filter((t) => !t.isBundle && !t.comingSoon)
 
   // Card form state
   const [cardName, setCardName] = useState(user?.name ?? '')
@@ -63,6 +63,10 @@ export default function Checkout() {
     () => new Date(Date.now() + 365 * 86400000).toISOString(),
     [],
   )
+
+  // Simulated card checkout is a sales-demo sandbox path only (?demo=1).
+  // Public buyers use invoice / PO until the live payment processor is connected.
+  const showDemoCard = searchParams.get('demo') === '1'
 
   const selectPlan = (id: PlanId) => {
     setSearchParams({ plan: id })
@@ -317,24 +321,25 @@ export default function Checkout() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="card">
+          <Tabs defaultValue="invoice">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="card" className="gap-2"><CreditCard className="h-4 w-4" /> Pay by card</TabsTrigger>
               <TabsTrigger value="invoice" className="gap-2"><Receipt className="h-4 w-4" /> Request invoice / PO</TabsTrigger>
+              <TabsTrigger value="card" className="gap-2"><CreditCard className="h-4 w-4" /> Pay by card</TabsTrigger>
             </TabsList>
 
             {/* Card payment */}
             <TabsContent value="card">
+              {showDemoCard ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Card payment</CardTitle>
                     <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
-                      Stripe test mode — simulated
+                      Demo sandbox — simulated, no real charge
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    This is a simulated checkout. No real charge is made and no card data is stored.
+                    Sandbox checkout for guided demos. No real charge is made and no card data is stored.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -371,11 +376,28 @@ export default function Checkout() {
                       {processing ? 'Processing…' : `Pay ${formatUSD(plan.priceAnnual!)}`}
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
-                      Payments are processed by Stripe. EduSphere USA does not store credit card data.
+                      No real payment is processed in the demo sandbox. Live card processing will be
+                      handled by our payment provider; EduSphere USA will not store credit card data.
                     </p>
                   </form>
                 </CardContent>
               </Card>
+              ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Card payments — coming soon</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    We're completing payment processor onboarding. Schools can activate today by
+                    invoice or purchase order — most districts procure this way anyway.
+                  </p>
+                  <Button type="button" variant="outline" onClick={() => (document.querySelector<HTMLButtonElement>('[data-state][value="invoice"]')?.click())}>
+                    Switch to invoice / PO <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+              )}
             </TabsContent>
 
             {/* Invoice / PO */}

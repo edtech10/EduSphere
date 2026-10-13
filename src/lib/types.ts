@@ -131,6 +131,8 @@ export interface CredentialTrack {
   category: 'healthcare' | 'aviation'
   isBundle?: boolean
   includedTrackIds?: string[]
+  /** Track content exists in-app, but is not yet offered on marketing/checkout pages. */
+  comingSoon?: boolean
 }
 
 export interface Module {

@@ -195,6 +195,9 @@ export default function Home() {
             </p>
           </div>
           <DashboardMock />
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Illustrative dashboard — all names and figures are sample data.
+          </p>
         </div>
       </section>
 
@@ -215,7 +218,7 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {db.tracks.map((track) => (
+            {db.tracks.filter((t) => !t.comingSoon).map((track) => (
               <Card key={track.id} className="flex flex-col">
                 <div className="h-1.5 rounded-t-lg" style={{ backgroundColor: track.color }} />
                 <CardHeader>

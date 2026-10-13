@@ -12,6 +12,8 @@ import {
   LayoutDashboard,
   FileBarChart,
   Gauge,
+  Download,
+  Crosshair,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +42,33 @@ const SCORE_COMPONENTS = [
   { weight: '20%', label: 'Module completion', text: 'Share of assigned modules and lessons completed.' },
   { weight: '15%', label: 'Final practice test score', text: 'Score on the timed, exam-style final practice test.' },
 ]
+
+const TRACK_ALIGNMENT: Record<string, string[]> = {
+  track_ma: [
+    'Clinical patient care & vital signs',
+    'Medical terminology, anatomy & physiology',
+    'Administrative & front-office procedures',
+    'Pharmacology fundamentals & medication safety',
+    'Infection control & safety compliance',
+    'EKG, laboratory & diagnostic procedures',
+  ],
+  track_phleb: [
+    'Specimen collection techniques',
+    'Order of draw & tube handling',
+    'Patient identification & safety',
+    'Infection control & site selection',
+    'Specimen transport, processing & storage',
+    'Point-of-care & waived testing basics',
+  ],
+  track_cla: [
+    'Laboratory safety & quality control',
+    'Specimen accessioning & processing',
+    'Hematology fundamentals',
+    'Clinical chemistry fundamentals',
+    'Microbiology fundamentals',
+    'Laboratory operations & result workflow',
+  ],
+}
 
 const STATUS_ORDER: ReadinessStatus[] = [
   'not_started',
@@ -146,6 +175,43 @@ export default function HealthcareReadiness() {
         </div>
       </section>
 
+      {/* Credential alignment */}
+      <section className="border-t bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex items-center gap-2">
+            <Crosshair className="h-6 w-6 text-primary" />
+            <h2 className="text-3xl font-bold tracking-tight">Credential alignment</h2>
+          </div>
+          <p className="mt-3 max-w-3xl text-muted-foreground">
+            Every module and practice bank is mapped to the competency domains commonly tested by
+            widely used national healthcare credentialing exams. EduSphere USA is an independent
+            readiness provider and is not affiliated with or endorsed by any credentialing body.
+          </p>
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {concreteTracks.map((track) => (
+              <Card key={track.id}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: track.color }} />
+                    <CardTitle className="text-base">{track.shortName}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {(TRACK_ALIGNMENT[track.id] ?? []).map((domain) => (
+                      <li key={domain} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        {domain}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Capabilities grid */}
       <section className="border-t bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -231,9 +297,14 @@ export default function HealthcareReadiness() {
                 We'll walk your team through diagnostics, scoring, and reporting in a live demo.
               </p>
             </div>
-            <div className="flex shrink-0 gap-3">
+            <div className="flex shrink-0 flex-wrap gap-3">
               <Button asChild>
                 <Link to="/demo">Request School Demo</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="/reports/sample-student-readiness-report.pdf" target="_blank" rel="noreferrer">
+                  <Download className="mr-2 h-4 w-4" /> Sample readiness report
+                </a>
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/pricing">View Pricing</Link>

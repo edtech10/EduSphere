@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useLocation, Navigate } from 'react-router'
+import { useNavigate, useLocation, Navigate, useSearchParams, Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -37,6 +37,10 @@ export default function Login() {
   // Reset state
   const [resetEmail, setResetEmail] = useState('')
   const [resetSent, setResetSent] = useState(false)
+
+  // Demo quick-fill is only shown when arriving with ?demo=1 (shared in sales demos).
+  const [searchParams] = useSearchParams()
+  const showDemo = searchParams.get('demo') === '1'
 
   if (user) {
     return <Navigate to={homeForRole(user.role)} replace />
@@ -134,29 +138,39 @@ export default function Login() {
                   <Button type="submit" className="w-full">Log in</Button>
                 </form>
 
-                <div className="mt-6 rounded-lg border bg-slate-50 p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Badge variant="outline">Demo environment</Badge>
-                    <span className="text-xs text-muted-foreground">password: demo123</span>
+                {showDemo ? (
+                  <div className="mt-6 rounded-lg border bg-slate-50 p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Badge variant="outline">Demo environment</Badge>
+                      <span className="text-xs text-muted-foreground">password: demo123</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {DEMO_ACCOUNTS.map((acct) => (
+                        <button
+                          key={acct.email}
+                          type="button"
+                          onClick={() => {
+                            setLoginEmail(acct.email)
+                            setLoginPassword('demo123')
+                            setLoginError(null)
+                          }}
+                          className="rounded-md border bg-white px-3 py-2 text-left transition-colors hover:border-primary hover:bg-primary/5"
+                        >
+                          <p className="text-xs font-semibold">{acct.label}</p>
+                          <p className="truncate text-xs text-muted-foreground">{acct.email}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {DEMO_ACCOUNTS.map((acct) => (
-                      <button
-                        key={acct.email}
-                        type="button"
-                        onClick={() => {
-                          setLoginEmail(acct.email)
-                          setLoginPassword('demo123')
-                          setLoginError(null)
-                        }}
-                        className="rounded-md border bg-white px-3 py-2 text-left transition-colors hover:border-primary hover:bg-primary/5"
-                      >
-                        <p className="text-xs font-semibold">{acct.label}</p>
-                        <p className="truncate text-xs text-muted-foreground">{acct.email}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                ) : (
+                  <p className="mt-6 rounded-lg border bg-slate-50 p-4 text-center text-xs text-muted-foreground">
+                    Evaluating EduSphere USA for your school?{' '}
+                    <Link to="/demo" className="font-medium text-primary underline-offset-4 hover:underline">
+                      Request a guided demo
+                    </Link>{' '}
+                    and we'll set up a sandbox with sample data for every role.
+                  </p>
+                )}
               </TabsContent>
 
               {/* Create school account */}

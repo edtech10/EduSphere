@@ -8,6 +8,11 @@ import {
   Eye,
   FileBarChart,
   AlertTriangle,
+  Download,
+  ShieldCheck,
+  Receipt,
+  Accessibility as AccessibilityIcon,
+  Lock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,6 +30,39 @@ const PAINS_AND_OUTCOMES = [
   {
     pain: { icon: FileSpreadsheet, title: 'Manual tracking', text: 'Compiling readiness evidence for accreditation or funders takes days of manual work.' },
     outcome: { icon: FileBarChart, title: 'Downloadable reports', text: 'Student and cohort readiness reports export in one click, whenever you need them.' },
+  },
+]
+
+const PROCUREMENT_ITEMS = [
+  {
+    icon: Download,
+    title: 'Sample readiness report (PDF)',
+    text: 'A sample student readiness report with fictional data — share it with program directors and funders.',
+    link: { href: '/reports/sample-student-readiness-report.pdf', label: 'Download sample report', external: true },
+  },
+  {
+    icon: Receipt,
+    title: 'Quote & PO support',
+    text: 'We work with purchase orders, district procurement workflows, and grant-funded purchases.',
+    link: { href: '/checkout?plan=growth', label: 'Request invoice / PO', external: false },
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Privacy & student data',
+    text: 'How we collect, store, and protect student information, in plain language.',
+    link: { href: '/student-data-protection', label: 'Student Data Protection', external: false },
+  },
+  {
+    icon: AccessibilityIcon,
+    title: 'Accessibility',
+    text: 'Our accessibility commitment and conformance approach for student-facing software.',
+    link: { href: '/accessibility', label: 'Accessibility statement (WCAG 2.1 AA)', external: false },
+  },
+  {
+    icon: Lock,
+    title: 'Security overview',
+    text: 'Role-based access for students, instructors, and admins; audit logging of administrative actions; card payments processed by a third-party PCI-compliant provider — card data never touches our servers.',
+    link: { href: '/privacy', label: 'Privacy Policy', external: false },
   },
 ]
 
@@ -129,6 +167,47 @@ export default function ForSchools() {
               </Card>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Procurement packet */}
+      <section className="border-t bg-slate-50 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Badge variant="outline" className="mb-4">Procurement packet</Badge>
+          <h2 className="text-3xl font-bold tracking-tight">Everything your business office will ask for</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">
+            The documents and answers schools typically need before a license can be approved.
+          </p>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {PROCUREMENT_ITEMS.map((item) => (
+              <Card key={item.title}>
+                <CardContent className="flex h-full flex-col p-5">
+                  <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <item.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="text-sm font-semibold">{item.title}</h3>
+                  <p className="mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground">{item.text}</p>
+                  {item.link.external ? (
+                    <a
+                      href={item.link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {item.link.label} <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.link.href}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {item.link.label} <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 

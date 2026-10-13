@@ -108,7 +108,12 @@ export default function Products() {
                         style={{ backgroundColor: track.color }}
                       />
                       <div>
-                        <p className="text-sm font-medium">{track.name}</p>
+                        <p className="text-sm font-medium">
+                          {track.name}
+                          {track.comingSoon && (
+                            <Badge variant="secondary" className="ml-2 align-middle text-[10px]">Coming soon</Badge>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">~{track.estimatedWeeks} weeks</p>
                       </div>
                     </li>
@@ -130,18 +135,25 @@ export default function Products() {
           </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {db.tracks.map((track) => (
-              <Card key={track.id} className="flex flex-col overflow-hidden">
+              <Card key={track.id} className={`flex flex-col overflow-hidden${track.comingSoon ? ' opacity-70' : ''}`}>
                 <div className="h-1.5" style={{ backgroundColor: track.color }} />
                 <CardHeader>
                   <CardTitle className="text-base">{track.name}</CardTitle>
-                  {track.isBundle && (
-                    <Badge variant="outline" className="w-fit">Bundle</Badge>
-                  )}
+                  <div className="flex gap-2">
+                    {track.isBundle && (
+                      <Badge variant="outline" className="w-fit">Bundle</Badge>
+                    )}
+                    {track.comingSoon && (
+                      <Badge variant="secondary" className="w-fit">Coming soon</Badge>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col">
                   <p className="flex-1 text-sm text-muted-foreground">{track.description}</p>
                   <p className="mt-4 text-xs font-medium text-muted-foreground">
-                    Estimated completion: ~{track.estimatedWeeks} weeks
+                    {track.comingSoon
+                      ? 'In development — contact us for early access'
+                      : `Estimated completion: ~${track.estimatedWeeks} weeks`}
                   </p>
                 </CardContent>
               </Card>

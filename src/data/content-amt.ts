@@ -16,6 +16,7 @@ export const AMT_TRACK: CredentialTrack = {
   estimatedWeeks: 16,
   color: '#4d7c0f',
   category: 'aviation',
+  comingSoon: true,
 }
 
 export const AMT_MODULES: Module[] = [
