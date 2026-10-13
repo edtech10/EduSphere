@@ -322,14 +322,16 @@ export default function Checkout() {
           </Card>
         ) : (
           <Tabs defaultValue="invoice">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="invoice" className="gap-2"><Receipt className="h-4 w-4" /> Request invoice / PO</TabsTrigger>
-              <TabsTrigger value="card" className="gap-2"><CreditCard className="h-4 w-4" /> Pay by card</TabsTrigger>
-            </TabsList>
+            {showDemoCard && (
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="invoice" className="gap-2"><Receipt className="h-4 w-4" /> Request invoice / PO</TabsTrigger>
+                <TabsTrigger value="card" className="gap-2"><CreditCard className="h-4 w-4" /> Pay by card</TabsTrigger>
+              </TabsList>
+            )}
 
-            {/* Card payment */}
+            {/* Card payment — demo sandbox only; public schools procure by invoice / PO */}
+            {showDemoCard && (
             <TabsContent value="card">
-              {showDemoCard ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -382,23 +384,8 @@ export default function Checkout() {
                   </form>
                 </CardContent>
               </Card>
-              ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Card payments — coming soon</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    We're completing payment processor onboarding. Schools can activate today by
-                    invoice or purchase order — most districts procure this way anyway.
-                  </p>
-                  <Button type="button" variant="outline" onClick={() => (document.querySelector<HTMLButtonElement>('[data-state][value="invoice"]')?.click())}>
-                    Switch to invoice / PO <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-              )}
             </TabsContent>
+            )}
 
             {/* Invoice / PO */}
             <TabsContent value="invoice">
@@ -406,8 +393,9 @@ export default function Checkout() {
                 <CardHeader>
                   <CardTitle className="text-lg">Request an invoice or purchase order</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    For schools that pay by invoice or require procurement paperwork. Your organization
-                    activates after payment or approval.
+                    How schools buy: submit this form and we'll send a formal quote, W-9, and vendor
+                    packet for your approval workflow. Your organization activates after payment or
+                    invoice approval. Card payments open after payment processor onboarding.
                   </p>
                 </CardHeader>
                 <CardContent>

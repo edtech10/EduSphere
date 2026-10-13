@@ -87,3 +87,14 @@
     background: white !important;
   }
 }
+
+/* Hide Netlify's injected "Deploys by Netlify" badge on the live site.
+   (Also disable it in Netlify: Site configuration → Build & deploy → badge.) */
+#netlify-badge,
+.netlify-badge,
+div[id^="netlify-badge"],
+iframe[id^="netlify-badge"],
+iframe[src*="netlify.com/badge"] {
+  display: none !important;
+  visibility: hidden !important;
+}

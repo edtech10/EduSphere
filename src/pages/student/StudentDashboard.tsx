@@ -113,7 +113,12 @@ export default function StudentDashboard() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <CardTitle className="text-base">{track.name}</CardTitle>
+                  <CardTitle className="text-base">
+                    {track.name}
+                    {track.comingSoon && (
+                      <Badge variant="secondary" className="ml-2 align-middle text-[10px]">Pilot program</Badge>
+                    )}
+                  </CardTitle>
                   <CardDescription className="mt-1 line-clamp-2">{track.credentialFocus}</CardDescription>
                 </div>
                 <ReadinessBadge status={readiness.status} />

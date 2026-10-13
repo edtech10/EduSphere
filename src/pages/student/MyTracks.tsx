@@ -57,7 +57,12 @@ export default function MyTracks() {
             <Card key={track.id} className="flex flex-col">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base leading-snug">{track.name}</CardTitle>
+                  <CardTitle className="text-base leading-snug">
+                    {track.name}
+                    {track.comingSoon && (
+                      <Badge variant="secondary" className="ml-2 align-middle text-[10px]">Pilot program</Badge>
+                    )}
+                  </CardTitle>
                   <span
                     className="mt-1 h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: track.color }}

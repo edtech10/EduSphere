@@ -302,7 +302,7 @@ export default function HealthcareReadiness() {
                 <Link to="/demo">Request School Demo</Link>
               </Button>
               <Button variant="outline" asChild>
-                <a href="/reports/sample-student-readiness-report.pdf" target="_blank" rel="noreferrer">
+                <a href="/reports/sample-student-readiness-report.pdf" download>
                   <Download className="mr-2 h-4 w-4" /> Sample readiness report
                 </a>
               </Button>

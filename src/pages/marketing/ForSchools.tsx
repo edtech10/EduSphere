@@ -190,8 +190,7 @@ export default function ForSchools() {
                   {item.link.external ? (
                     <a
                       href={item.link.href}
-                      target="_blank"
-                      rel="noreferrer"
+                      download
                       className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
                     >
                       {item.link.label} <ArrowRight className="h-3.5 w-3.5" />
