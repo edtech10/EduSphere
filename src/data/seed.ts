@@ -194,7 +194,7 @@ export function buildSeedDatabase(): Database {
     { id: 'pay_002', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'succeeded', method: 'card', description: 'Single Track License — Health Sciences (annual)', createdAt: daysAgo(110), stripePaymentIntentId: 'pi_demo_002' },
     { id: 'pay_003', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'failed', method: 'card', description: 'Single Track License — renewal attempt', createdAt: daysAgo(9), stripePaymentIntentId: 'pi_demo_003', failureReason: 'Card declined (insufficient funds)' },
     { id: 'pay_004', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'failed', method: 'card', description: 'Single Track License — renewal retry', createdAt: daysAgo(4), stripePaymentIntentId: 'pi_demo_004', failureReason: 'Card declined (do not honor)' },
-    { id: 'pay_005', orgId: 'org_summit', subscriptionId: 'sub_summit', amount: 69500, currency: 'usd', status: 'succeeded', method: 'invoice', description: 'Program License — Health Sciences (annual, invoice INV-1042)', createdAt: daysAgo(58), stripePaymentIntentId: null },
+    { id: 'pay_005', orgId: 'org_summit', subscriptionId: 'sub_summit', amount: 69500, currency: 'usd', status: 'succeeded', method: 'invoice', description: 'Multi-Field Program License — Health Sciences (annual, invoice INV-1042)', createdAt: daysAgo(58), stripePaymentIntentId: null },
   ]
 
   const invoiceRequests: Database['invoiceRequests'] = [
@@ -281,7 +281,7 @@ export function buildSeedDatabase(): Database {
     { id: 'enr_017', studentId: 'stu_sm_03', trackId: 'track_amt', orgId: 'org_summit', assignedBy: 'user_sm_inst1', assignedAt: daysAgo(15), status: 'active' },
   ]
 
-  // Generated enrollments: spread students across all 8 IRC fields.
+  // Generated enrollments: spread students across all 9 IRC fields.
   const GEN_TRACK_IDS = TRACKS.filter((t) => !t.isBundle).map((t) => t.id)
 
   // The demo student is enrolled in every concrete track so evaluators can
@@ -628,7 +628,7 @@ export function buildSeedDatabase(): Database {
   }
 
   const auditLogs: Database['auditLogs'] = [
-    { id: 'log_001', actorId: 'user_super', actorName: 'Platform Admin', action: 'subscription.created', detail: 'Program License activated for Summit Workforce School via invoice INV-1042', orgId: 'org_summit', createdAt: daysAgo(58) },
+    { id: 'log_001', actorId: 'user_super', actorName: 'Platform Admin', action: 'subscription.created', detail: 'Multi-Field Program License activated for Summit Workforce School via invoice INV-1042', orgId: 'org_summit', createdAt: daysAgo(58) },
     { id: 'log_002', actorId: 'user_nv_admin', actorName: 'Dana Whitfield', action: 'user.invited', detail: 'Invited instructor James Carter', orgId: 'org_northview', createdAt: daysAgo(198) },
     { id: 'log_003', actorId: 'user_nv_inst1', actorName: 'Elena Ruiz', action: 'track.assigned', detail: 'Assigned Medical Assistant Readiness to 4 students', orgId: 'org_northview', createdAt: daysAgo(45) },
     { id: 'log_004', actorId: 'user_super', actorName: 'Platform Admin', action: 'payment.failed', detail: 'Renewal payment failed for Harbor Allied Health Academy', orgId: 'org_harbor', createdAt: daysAgo(9) },

@@ -6,7 +6,7 @@ import { buildSeedDatabase } from '@/data/seed'
 
 const STORAGE_KEY = 'edusphere_db_v1'
 const VERSION_KEY = 'edusphere_db_version'
-const SEED_VERSION = '7'
+const SEED_VERSION = '8'
 
 let db: Database
 const listeners = new Set<() => void>()

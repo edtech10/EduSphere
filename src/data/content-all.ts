@@ -13,11 +13,14 @@ import { HEALTH_SPECS } from './catalog-health'
 import { synthesizeAll } from './catalog-compact'
 import { TECH_COMPACT } from './catalog-tech'
 import { BUSINESS_COMPACT } from './catalog-business'
+import { AUTO_COMPACT } from './catalog-auto'
+import { buildExtraQuestions } from './questions-flagship'
 
 // Expand generated catalogs.
 const health = expandAll(HEALTH_SPECS)
 const tech = expandAll(synthesizeAll(TECH_COMPACT))
 const business = expandAll(synthesizeAll(BUSINESS_COMPACT))
+const auto = expandAll(synthesizeAll(AUTO_COMPACT))
 
 // Apply rich metadata overlays to the four hand-authored tracks.
 const handAuthored = BASE_TRACKS.map((t) => {
@@ -25,10 +28,17 @@ const handAuthored = BASE_TRACKS.map((t) => {
   return meta ? { ...t, ...meta, comingSoon: undefined } : t
 })
 
-export const ALL_TRACKS = [...handAuthored, ...health.tracks, ...tech.tracks, ...business.tracks]
-export const ALL_MODULES = [...BASE_MODULES, ...health.modules, ...tech.modules, ...business.modules]
-export const ALL_LESSONS = [...BASE_LESSONS, ...health.lessons, ...tech.lessons, ...business.lessons]
-export const ALL_QUESTIONS = [...BASE_QUESTIONS, ...health.questions, ...tech.questions, ...business.questions]
+export const ALL_TRACKS = [...handAuthored, ...health.tracks, ...tech.tracks, ...business.tracks, ...auto.tracks]
+export const ALL_MODULES = [...BASE_MODULES, ...health.modules, ...tech.modules, ...business.modules, ...auto.modules]
+export const ALL_LESSONS = [...BASE_LESSONS, ...health.lessons, ...tech.lessons, ...business.lessons, ...auto.lessons]
+export const ALL_QUESTIONS = [
+  ...BASE_QUESTIONS,
+  ...health.questions,
+  ...tech.questions,
+  ...business.questions,
+  ...auto.questions,
+  ...buildExtraQuestions([...handAuthored, ...health.tracks, ...tech.tracks, ...business.tracks, ...auto.tracks]),
+]
 export const ALL_ASSESSMENTS = [
   ...BASE_ASSESSMENTS,
   ...health.assessments,

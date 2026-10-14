@@ -65,6 +65,53 @@ export default function CohortReport() {
     .sort((a, b) => a.accuracy - b.accuracy)
     .slice(0, 8)
 
+  // Most missed questions across the cohort (from completed attempts).
+  const orgStudentIds = new Set(rows.map((r) => r.student!.id))
+  const questionMiss = new Map<string, { total: number; missed: number }>()
+  for (const att of db.attempts) {
+    if (!att.completedAt || !orgStudentIds.has(att.studentId)) continue
+    for (const resp of att.responses) {
+      const entry = questionMiss.get(resp.questionId) ?? { total: 0, missed: 0 }
+      entry.total += 1
+      if (!resp.correct) entry.missed += 1
+      questionMiss.set(resp.questionId, entry)
+    }
+  }
+  const mostMissed = [...questionMiss.entries()]
+    .map(([qid, v]) => {
+      const q = db.questions.find((x) => x.id === qid)
+      return q
+        ? { question: q, total: v.total, missed: v.missed, missRate: Math.round((v.missed / v.total) * 100) }
+        : null
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null && x.total >= 3)
+    .sort((a, b) => b.missRate - a.missRate)
+    .slice(0, 8)
+
+  // Instructor action recommendations, derived from the cohort data above.
+  const recommendations: string[] = []
+  for (const t of topicSummary.filter((t) => t.accuracy < 70).slice(0, 2)) {
+    recommendations.push(`Re-teach "${t.topic}" in small groups — cohort accuracy is ${t.accuracy}%.`)
+  }
+  if (atRiskCount > 0) {
+    recommendations.push(`Schedule 1:1 check-ins with the ${atRiskCount} student${atRiskCount > 1 ? 's' : ''} currently flagged at risk.`)
+  }
+  if (mostMissed.length > 0 && mostMissed[0].missRate >= 60) {
+    recommendations.push(
+      `Walk through the top-missed question ("${mostMissed[0].question.text.slice(0, 60)}…") as a bell ringer — ${mostMissed[0].missRate}% of attempts miss it.`,
+    )
+  }
+  if (completionRate < 70) {
+    recommendations.push('Protect seat time this week — module completion is below 70% across the cohort.')
+  }
+  const noDiagnostic = rows.filter((r) => r.progress?.diagnosticBaselinePct == null).length
+  if (noDiagnostic > 0) {
+    recommendations.push(`Have the ${noDiagnostic} enrollment${noDiagnostic > 1 ? 's' : ''} without a baseline complete the diagnostic so growth is measurable.`)
+  }
+  if (recommendations.length === 0) {
+    recommendations.push('Cohort is on track — proceed to timed final practice and readiness reviews.')
+  }
+
   return (
     <div className="space-y-4">
       <div className="no-print flex items-center justify-between">
@@ -178,6 +225,55 @@ export default function CohortReport() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* Most missed questions */}
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Most missed questions
+          </h2>
+          {mostMissed.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Not enough completed attempts to rank questions.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Question</TableHead>
+                  <TableHead>Track</TableHead>
+                  <TableHead>Topic</TableHead>
+                  <TableHead className="text-right">Attempts</TableHead>
+                  <TableHead className="text-right">Miss rate</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mostMissed.map((m) => (
+                  <TableRow key={m.question.id}>
+                    <TableCell className="max-w-md text-xs">
+                      {m.question.text.length > 110 ? `${m.question.text.slice(0, 110)}…` : m.question.text}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {db.tracks.find((t) => t.id === m.question.trackId)?.shortName ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-xs">{m.question.topic}</TableCell>
+                    <TableCell className="text-right tabular-nums">{m.total}</TableCell>
+                    <TableCell className="text-right font-medium tabular-nums text-red-700">{m.missRate}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </section>
+
+        {/* Instructor action recommendations */}
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Recommended instructor actions
+          </h2>
+          <ol className="list-decimal space-y-1.5 pl-5 text-sm">
+            {recommendations.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ol>
         </section>
 
         {/* Footer */}

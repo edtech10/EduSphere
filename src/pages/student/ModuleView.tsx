@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { useDB, updateDB } from '@/lib/db'
-import { LessonBody } from '@/components/LessonBody'
+import { LessonEnriched } from '@/components/lessons/LessonEnriched'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -125,7 +125,12 @@ export default function ModuleView() {
                 </div>
               </CardHeader>
               <CardContent>
-                <LessonBody lesson={lesson} />
+                <LessonEnriched
+                  lesson={lesson}
+                  track={track}
+                  moduleTitle={mod.title}
+                  showInstructorNotes={user.role !== 'student'}
+                />
               </CardContent>
             </Card>
           )

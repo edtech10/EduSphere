@@ -1,449 +1,325 @@
-// Super Admin — content management: tracks, modules, lessons, and question bank.
-import { useState } from 'react'
-import { Plus, ShieldAlert, CheckCircle2 } from 'lucide-react'
-import { useDB, updateDB, logAction, uid } from '@/lib/db'
-import { useAuth } from '@/lib/auth'
+// Super Admin — Content CMS dashboard: platform-wide content stats, filters,
+// and per-track quality. Track detail lives at /app/super/content/:trackId.
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
+import {
+  AlertTriangle, BookOpen, ClipboardCheck, FileText, Gamepad2, Layers,
+  Library, Search, ShieldAlert, ChevronRight,
+} from 'lucide-react'
+import { useDB } from '@/lib/db'
+import { FIELDS, getField } from '@/data/fields'
+import { ACTIVITIES, getTrackQA, STATUS_META, resourcesForTrack, type TrackQA } from '@/data/enrichment'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import type { CredentialTrack, Difficulty, QuestionType } from '@/lib/types'
+import type { ContentStatus, CredentialTrack, Database, FieldId } from '@/lib/types'
+import { formatDate as fmtDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
-const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
-  { value: 'multiple_choice', label: 'Multiple choice' },
-  { value: 'scenario', label: 'Scenario' },
-  { value: 'true_false', label: 'True / False' },
+export interface TrackStats {
+  modules: number
+  lessons: number
+  questions: number
+  assessments: number
+  activities: number
+  resources: number
+}
+
+export function trackStats(db: Database, track: CredentialTrack): TrackStats {
+  const modules = db.modules.filter((m) => m.trackId === track.id)
+  const moduleIds = new Set(modules.map((m) => m.id))
+  return {
+    modules: modules.length,
+    lessons: db.lessons.filter((l) => moduleIds.has(l.moduleId)).length,
+    questions: db.questions.filter((q) => q.trackId === track.id).length,
+    assessments: db.assessments.filter((a) => a.trackId === track.id).length,
+    activities: ACTIVITIES.filter((a) => a.trackId === track.id).length,
+    resources: resourcesForTrack(track).length,
+  }
+}
+
+/** Deterministic 0–100 content quality score for a track. */
+export function qualityScore(track: CredentialTrack, stats: TrackStats, qa: TrackQA): number {
+  let score = 40
+  if (stats.questions >= 50) score += 18
+  else if (stats.questions >= 20) score += 10
+  else if (stats.questions >= 10) score += 4
+  if (stats.lessons >= 20) score += 12
+  else if (stats.lessons >= 10) score += 6
+  if (stats.activities > 0) score += 10
+  if ((track.domains?.length ?? 0) >= 8) score += 6
+  if (qa.status === 'published') score += 10
+  else if (qa.status === 'in_review') score += 5
+  if (qa.flaggedQuestions === 0) score += 4
+  return Math.min(100, score)
+}
+
+export function qualityBadgeClass(score: number): string {
+  if (score >= 85) return 'text-emerald-700'
+  if (score >= 65) return 'text-amber-700'
+  return 'text-red-700'
+}
+
+const Q_BUCKETS = [
+  { id: 'all', label: 'Any size' },
+  { id: 'lt20', label: 'Under 20 questions' },
+  { id: 'mid', label: '20–49 questions' },
+  { id: 'ge50', label: '50+ questions' },
 ]
-const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']
-
-const difficultyStyles: Record<Difficulty, string> = {
-  easy: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  medium: 'bg-amber-50 text-amber-700 border-amber-200',
-  hard: 'bg-red-50 text-red-700 border-red-200',
-}
-
-interface QuestionForm {
-  moduleId: string
-  topic: string
-  type: QuestionType
-  difficulty: Difficulty
-  text: string
-  choices: [string, string, string, string]
-  correctIndex: number
-  explanation: string
-  tags: string
-  estimatedTimeSec: number
-}
-
-const emptyForm = (moduleId: string): QuestionForm => ({
-  moduleId,
-  topic: '',
-  type: 'multiple_choice',
-  difficulty: 'medium',
-  text: '',
-  choices: ['', '', '', ''],
-  correctIndex: 0,
-  explanation: '',
-  tags: '',
-  estimatedTimeSec: 60,
-})
 
 export default function SuperContent() {
   const db = useDB()
-  const { user } = useAuth()
-  const actor = { id: user?.id ?? 'user_super', name: user?.name ?? 'Platform Admin' }
 
-  const [addTrack, setAddTrack] = useState<CredentialTrack | null>(null)
-  const [form, setForm] = useState<QuestionForm>(emptyForm(''))
+  const [search, setSearch] = useState('')
+  const [fieldFilter, setFieldFilter] = useState<'all' | FieldId>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | ContentStatus>('all')
+  const [qBucket, setQBucket] = useState('all')
+  const [needsSims, setNeedsSims] = useState(false)
 
-  // Concrete tracks first, bundle last
-  const tracks = [...db.tracks].sort((a, b) => Number(!!a.isBundle) - Number(!!b.isBundle))
-
-  const openAdd = (track: CredentialTrack) => {
-    const firstModule = db.modules.find((m) => m.trackId === track.id)
-    setForm(emptyForm(firstModule?.id ?? ''))
-    setAddTrack(track)
-  }
-
-  const setChoice = (i: number, value: string) => {
-    const next = [...form.choices] as QuestionForm['choices']
-    next[i] = value
-    setForm({ ...form, choices: next })
-  }
-
-  const addQuestion = () => {
-    if (!addTrack || !form.moduleId || !form.text.trim()) return
-    const isTF = form.type === 'true_false'
-    const choices = isTF ? ['True', 'False'] : form.choices.map((c) => c.trim())
-    if (!isTF && choices.some((c) => !c)) return
-    const correctIndex = isTF ? Math.min(form.correctIndex, 1) : form.correctIndex
-    const moduleTitle = db.modules.find((m) => m.id === form.moduleId)?.title ?? ''
-    updateDB((d) => {
-      d.questions.push({
-        id: uid('q'),
-        trackId: addTrack.id,
-        moduleId: form.moduleId,
-        topic: form.topic.trim() || moduleTitle,
-        type: form.type,
-        difficulty: form.difficulty,
-        text: form.text.trim(),
-        choices,
-        correctIndex,
-        explanation: form.explanation.trim(),
-        estimatedTimeSec: Math.max(0, Math.floor(form.estimatedTimeSec)),
-        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-      })
+  const rows = useMemo(() => {
+    const concrete = db.tracks.filter((t) => !t.isBundle && !t.comingSoon)
+    return concrete.map((track) => {
+      const stats = trackStats(db, track)
+      const qa = getTrackQA(track, stats.questions, stats.activities)
+      return { track, stats, qa, quality: qualityScore(track, stats, qa) }
     })
-    logAction(
-      actor.id, actor.name, 'content.question_added',
-      `Added ${form.type.replace('_', ' ')} question to ${addTrack.name} — ${moduleTitle}`,
-      null,
-    )
-    setAddTrack(null)
-  }
+  }, [db])
 
-  const trackModules = (trackId: string) =>
-    db.modules.filter((m) => m.trackId === trackId).sort((a, b) => a.order - b.order)
+  const totals = useMemo(() => {
+    const published = rows.filter((r) => r.qa.status === 'published').length
+    const needingReview = rows.filter((r) => r.qa.status !== 'published').length
+    const lastUpdate = rows.reduce(
+      (max, r) => (r.qa.updatedAt > max ? r.qa.updatedAt : max),
+      '1970-01-01',
+    )
+    const avgQuality = Math.round(rows.reduce((s, r) => s + r.quality, 0) / Math.max(1, rows.length))
+    return {
+      tracks: rows.length,
+      modules: rows.reduce((s, r) => s + r.stats.modules, 0),
+      lessons: rows.reduce((s, r) => s + r.stats.lessons, 0),
+      questions: rows.reduce((s, r) => s + r.stats.questions, 0),
+      assessments: rows.reduce((s, r) => s + r.stats.assessments, 0),
+      simulations: ACTIVITIES.length,
+      resources: rows.reduce((s, r) => s + r.stats.resources, 0),
+      published,
+      needingReview,
+      lastUpdate,
+      avgQuality,
+    }
+  }, [rows])
+
+  const filtered = rows.filter(({ track, stats, qa }) => {
+    if (fieldFilter !== 'all' && track.category !== fieldFilter) return false
+    if (statusFilter !== 'all' && qa.status !== statusFilter) return false
+    if (needsSims && stats.activities === 0) return false
+    if (qBucket === 'lt20' && stats.questions >= 20) return false
+    if (qBucket === 'mid' && (stats.questions < 20 || stats.questions >= 50)) return false
+    if (qBucket === 'ge50' && stats.questions < 50) return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!track.name.toLowerCase().includes(q) && !track.shortName.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
+
+  const statCards = [
+    { label: 'Tracks', value: totals.tracks, icon: Layers },
+    { label: 'Modules', value: totals.modules, icon: BookOpen },
+    { label: 'Lessons', value: totals.lessons, icon: FileText },
+    { label: 'Questions', value: totals.questions, icon: Library },
+    { label: 'Assessments', value: totals.assessments, icon: ClipboardCheck },
+    { label: 'Simulations', value: totals.simulations, icon: Gamepad2 },
+    { label: 'Instructor resources', value: totals.resources, icon: Library },
+    { label: 'Needs review', value: totals.needingReview, icon: AlertTriangle, warn: totals.needingReview > 0 },
+  ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Content management</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Content CMS</h1>
         <p className="text-sm text-muted-foreground">
-          Credential-aligned tracks, modules, lessons, and the practice question bank.
+          Platform-wide content inventory, quality scoring, and the QA publishing workflow.
         </p>
       </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {statCards.map((s) => (
+          <Card key={s.label}>
+            <CardContent className="flex items-center gap-3 p-4">
+              <s.icon className={cn('h-5 w-5 shrink-0', s.warn ? 'text-amber-600' : 'text-primary')} />
+              <div>
+                <p className={cn('text-xl font-semibold tabular-nums', s.warn && 'text-amber-700')}>{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+          <span>
+            <span className="font-medium tabular-nums">{totals.published}</span> published ·{' '}
+            <span className="font-medium tabular-nums">{totals.needingReview}</span> in QA workflow
+          </span>
+          <span className="text-muted-foreground">
+            Last content update: {fmtDate(totals.lastUpdate)}
+          </span>
+          <span>
+            Average quality score:{' '}
+            <span className={cn('font-semibold tabular-nums', qualityBadgeClass(totals.avgQuality))}>
+              {totals.avgQuality} / 100
+            </span>
+          </span>
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="flex flex-wrap items-end gap-4 p-4">
+          <div className="min-w-[200px] flex-1">
+            <Label className="mb-1.5 block text-xs">Search</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Track name…"
+                className="pl-8"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-xs">Field</Label>
+            <Select value={fieldFilter} onValueChange={(v) => setFieldFilter(v as 'all' | FieldId)}>
+              <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All fields</SelectItem>
+                {FIELDS.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | ContentStatus)}>
+              <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {(['published', 'in_review', 'draft', 'needs_revision'] as ContentStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-xs">Question bank</Label>
+            <Select value={qBucket} onValueChange={setQBucket}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Q_BUCKETS.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 pb-1">
+            <Switch id="sims" checked={needsSims} onCheckedChange={setNeedsSims} />
+            <Label htmlFor="sims" className="text-xs">Has simulations</Label>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-amber-200 bg-amber-50">
         <CardContent className="flex items-start gap-3 p-4">
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <p className="text-sm text-amber-900">
             All practice content must be original. Do not copy questions from official certification
-            exams or third-party prep providers. EduSphere USA content is credential-aligned for
-            certification readiness and claims no endorsement by any certification provider.
+            exams or third-party prep providers. Content is credential-aligned for certification
+            readiness and claims no endorsement by any certification provider.
           </p>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {tracks.map((track) => {
-          const modules = trackModules(track.id)
-          const lessons = db.lessons.filter((l) => modules.some((m) => m.id === l.moduleId))
-          const questions = db.questions.filter((q) => q.trackId === track.id)
-          const assessments = db.assessments.filter((a) => a.trackId === track.id)
+      {/* Track cards */}
+      <div className="space-y-3">
+        {filtered.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center text-sm text-muted-foreground">
+              No tracks match the current filters.
+            </CardContent>
+          </Card>
+        )}
+        {filtered.map(({ track, stats, qa, quality }) => {
+          const field = getField(track.category)
+          const meta = STATUS_META[qa.status]
           return (
             <Card key={track.id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                <div className="flex items-start gap-3">
-                  <span
-                    className="mt-1.5 h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: track.color }}
-                  />
-                  <div>
-                    <CardTitle className="text-base">
-                      {track.name}
-                      {track.isBundle && (
-                        <Badge variant="secondary" className="ml-2 text-xs">Bundle</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="mt-1 max-w-2xl">{track.description}</CardDescription>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {track.credentialFocus} · ~{track.estimatedWeeks} weeks
-                    </p>
+              <CardHeader className="pb-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: track.color }} />
+                    <div className="min-w-0">
+                      <CardTitle className="text-base">{track.name}</CardTitle>
+                      <CardDescription className="mt-0.5">
+                        {field.name} · ~{track.estimatedWeeks} weeks · v{qa.version} · updated {fmtDate(qa.updatedAt)}
+                      </CardDescription>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className={meta.badgeClass}>{meta.label}</Badge>
+                        {qa.needsMoreQuestions && (
+                          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                            Needs more questions
+                          </Badge>
+                        )}
+                        {qa.noActivities && (
+                          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                            No simulations
+                          </Badge>
+                        )}
+                        {qa.flaggedQuestions > 0 && (
+                          <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                            {qa.flaggedQuestions} flagged questions
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  <div className="flex gap-4 text-center text-sm">
-                    <div><p className="font-semibold tabular-nums">{modules.length}</p><p className="text-xs text-muted-foreground">Modules</p></div>
-                    <div><p className="font-semibold tabular-nums">{lessons.length}</p><p className="text-xs text-muted-foreground">Lessons</p></div>
-                    <div><p className="font-semibold tabular-nums">{questions.length}</p><p className="text-xs text-muted-foreground">Questions</p></div>
-                    <div><p className="font-semibold tabular-nums">{assessments.length}</p><p className="text-xs text-muted-foreground">Assessments</p></div>
-                  </div>
-                  {!track.isBundle && (
-                    <Button variant="outline" size="sm" onClick={() => openAdd(track)}>
-                      <Plus className="mr-1 h-4 w-4" /> Add question
+                  <div className="flex shrink-0 items-center gap-5">
+                    <div className="hidden gap-4 text-center text-sm md:flex">
+                      <div><p className="font-semibold tabular-nums">{stats.modules}</p><p className="text-xs text-muted-foreground">Modules</p></div>
+                      <div><p className="font-semibold tabular-nums">{stats.lessons}</p><p className="text-xs text-muted-foreground">Lessons</p></div>
+                      <div><p className="font-semibold tabular-nums">{stats.questions}</p><p className="text-xs text-muted-foreground">Questions</p></div>
+                      <div><p className="font-semibold tabular-nums">{stats.activities}</p><p className="text-xs text-muted-foreground">Sims</p></div>
+                      <div><p className="font-semibold tabular-nums">{stats.resources}</p><p className="text-xs text-muted-foreground">Resources</p></div>
+                    </div>
+                    <div className="w-28">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Quality</span>
+                        <span className={cn('font-semibold tabular-nums', qualityBadgeClass(quality))}>{quality}</span>
+                      </div>
+                      <Progress value={quality} className="mt-1 h-1.5" />
+                    </div>
+                    <Button size="sm" variant="outline" asChild>
+                      <Link to={`/app/super/content/${track.id}`}>
+                        Manage <ChevronRight className="h-4 w-4" />
+                      </Link>
                     </Button>
-                  )}
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                {track.isBundle ? (
-                  <p className="text-sm text-muted-foreground">
-                    Includes:{' '}
-                    {track.includedTrackIds
-                      ?.map((id) => db.tracks.find((t) => t.id === id)?.name ?? id)
-                      .join(', ')}
-                    . Manage content on the individual tracks above.
-                  </p>
-                ) : (
-                  <Accordion type="multiple" className="w-full">
-                    {modules.map((mod) => {
-                      const modLessons = db.lessons
-                        .filter((l) => l.moduleId === mod.id)
-                        .sort((a, b) => a.order - b.order)
-                      const modQuestions = db.questions.filter((q) => q.moduleId === mod.id)
-                      return (
-                        <AccordionItem key={mod.id} value={mod.id}>
-                          <AccordionTrigger className="text-sm font-medium">
-                            <span>
-                              Module {mod.order}: {mod.title}
-                              <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                {modLessons.length} lessons · {modQuestions.length} questions
-                              </span>
-                            </span>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="space-y-4 pl-2">
-                              <p className="text-sm text-muted-foreground">{mod.description}</p>
-                              <div>
-                                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Lessons</p>
-                                <ul className="space-y-1">
-                                  {modLessons.map((l) => (
-                                    <li key={l.id} className="flex items-center justify-between text-sm">
-                                      <span>{l.order}. {l.title}</span>
-                                      <span className="text-xs text-muted-foreground">{l.durationMin} min</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              {modQuestions.length > 0 && (
-                                <div>
-                                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                    Questions ({modQuestions.length})
-                                  </p>
-                                  <div className="space-y-3">
-                                    {modQuestions.map((q, qi) => (
-                                      <div key={q.id} className="rounded-md border bg-white p-3">
-                                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                                          <span className="text-xs font-medium text-muted-foreground">Q{qi + 1}</span>
-                                          <Badge variant="outline" className="text-xs capitalize">
-                                            {q.type.replace('_', ' ')}
-                                          </Badge>
-                                          <Badge variant="outline" className={`text-xs capitalize ${difficultyStyles[q.difficulty]}`}>
-                                            {q.difficulty}
-                                          </Badge>
-                                          <span className="text-xs text-muted-foreground">
-                                            {q.topic} · ~{q.estimatedTimeSec}s
-                                          </span>
-                                        </div>
-                                        <p className="text-sm font-medium">{q.text}</p>
-                                        <ul className="mt-2 space-y-1">
-                                          {q.choices.map((c, ci) => (
-                                            <li key={ci} className="flex items-center gap-2 text-sm">
-                                              {ci === q.correctIndex ? (
-                                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                                              ) : (
-                                                <span className="h-4 w-4 shrink-0" />
-                                              )}
-                                              <span className={ci === q.correctIndex ? 'font-medium text-emerald-700' : 'text-muted-foreground'}>
-                                                {c}
-                                              </span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                        {q.explanation && (
-                                          <p className="mt-2 rounded bg-slate-50 p-2 text-xs text-muted-foreground">
-                                            {q.explanation}
-                                          </p>
-                                        )}
-                                        {q.tags.length > 0 && (
-                                          <div className="mt-2 flex flex-wrap gap-1">
-                                            {q.tags.map((t) => (
-                                              <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      )
-                    })}
-                  </Accordion>
-                )}
-              </CardContent>
             </Card>
           )
         })}
       </div>
-
-      {/* Add question dialog */}
-      <Dialog open={!!addTrack} onOpenChange={(open) => !open && setAddTrack(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Add question — {addTrack?.name}</DialogTitle>
-            <DialogDescription>
-              New questions must be original content aligned to the track's credential focus.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Module</Label>
-                <Select value={form.moduleId} onValueChange={(v) => setForm({ ...form, moduleId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
-                  <SelectContent>
-                    {addTrack && trackModules(addTrack.id).map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.order}. {m.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="q-topic">Topic</Label>
-                <Input
-                  id="q-topic"
-                  value={form.topic}
-                  onChange={(e) => setForm({ ...form, topic: e.target.value })}
-                  placeholder="e.g. Infection Control"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select
-                  value={form.type}
-                  onValueChange={(v) =>
-                    setForm({ ...form, type: v as QuestionType, correctIndex: 0 })
-                  }
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {QUESTION_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Difficulty</Label>
-                <Select
-                  value={form.difficulty}
-                  onValueChange={(v) => setForm({ ...form, difficulty: v as Difficulty })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {DIFFICULTIES.map((d) => (
-                      <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="q-time">Est. time (sec)</Label>
-                <Input
-                  id="q-time"
-                  type="number"
-                  min={0}
-                  value={form.estimatedTimeSec}
-                  onChange={(e) => setForm({ ...form, estimatedTimeSec: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="q-text">Question text</Label>
-              <Textarea
-                id="q-text"
-                rows={3}
-                value={form.text}
-                onChange={(e) => setForm({ ...form, text: e.target.value })}
-                placeholder="Write an original question…"
-              />
-            </div>
-
-            {form.type === 'true_false' ? (
-              <p className="text-sm text-muted-foreground">
-                Choices are set automatically: <span className="font-medium">True</span> /{' '}
-                <span className="font-medium">False</span>.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                <Label>Choices (4)</Label>
-                {form.choices.map((c, i) => (
-                  <Input
-                    key={i}
-                    value={c}
-                    onChange={(e) => setChoice(i, e.target.value)}
-                    placeholder={`Choice ${String.fromCharCode(65 + i)}`}
-                  />
-                ))}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Correct answer</Label>
-              <Select
-                value={String(form.correctIndex)}
-                onValueChange={(v) => setForm({ ...form, correctIndex: Number(v) })}
-              >
-                <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(form.type === 'true_false' ? ['True', 'False'] : form.choices).map((c, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {form.type === 'true_false'
-                        ? c
-                        : `${String.fromCharCode(65 + i)}${c ? ` — ${c.slice(0, 40)}` : ''}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="q-explanation">Explanation</Label>
-              <Textarea
-                id="q-explanation"
-                rows={2}
-                value={form.explanation}
-                onChange={(e) => setForm({ ...form, explanation: e.target.value })}
-                placeholder="Why the correct answer is correct…"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="q-tags">Tags (comma-separated)</Label>
-              <Input
-                id="q-tags"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                placeholder="safety, procedures"
-              />
-            </div>
-          </div>
-          <Separator />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddTrack(null)}>Cancel</Button>
-            <Button
-              onClick={addQuestion}
-              disabled={
-                !form.moduleId ||
-                !form.text.trim() ||
-                (form.type !== 'true_false' && form.choices.some((c) => !c.trim()))
-              }
-            >
-              Add question
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

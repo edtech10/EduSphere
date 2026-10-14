@@ -15,7 +15,7 @@ export const LICENSE_TYPES: {
 }[] = [
   { id: 'single', name: 'Single IRC Track License', bestFor: 'One teacher or one small credential cohort', maxStudents: 10, scope: '1 credential track' },
   { id: 'field', name: 'Field License', bestFor: 'A full program pathway in one field', maxStudents: 25, scope: 'All tracks in one field' },
-  { id: 'program', name: 'Program License', bestFor: 'Schools running multiple cohorts in one field', maxStudents: 60, scope: 'All tracks in one field' },
+  { id: 'program', name: 'Multi-Field Program License', bestFor: 'Schools running cohorts across two fields', maxStudents: 60, scope: 'All tracks in up to 2 fields' },
   { id: 'academy', name: 'Career Academy License', bestFor: 'Career academies spanning several fields', maxStudents: 150, scope: 'Any 4 IRC fields' },
 ]
 
@@ -24,14 +24,17 @@ export const PRICE_MATRIX: Record<'single' | 'field' | 'program', Record<FieldId
   single: {
     business: 7500, marketing: 8500, finance: 9500, it: 11500,
     healthcare: 12500, engineering: 13500, cybersecurity: 14500, aviation: 17500,
+    automotive: 10500,
   },
   field: {
     business: 22500, marketing: 24500, finance: 27500, it: 32500,
     engineering: 34500, healthcare: 37500, cybersecurity: 39500, aviation: 47500,
+    automotive: 29500,
   },
   program: {
     business: 39500, marketing: 44500, finance: 49500, it: 59500,
     engineering: 64500, healthcare: 69500, cybersecurity: 74500, aviation: 89500,
+    automotive: 54500,
   },
 }
 

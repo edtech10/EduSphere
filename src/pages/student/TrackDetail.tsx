@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import {
   Lock, CheckCircle2, Circle, Clock, PlayCircle, ClipboardCheck, Timer, ChevronRight,
+  Gamepad2, ArrowRight, TrendingDown,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { useDB } from '@/lib/db'
@@ -8,6 +9,8 @@ import { computeReadiness } from '@/lib/scoring'
 import { pct } from '@/lib/format'
 import type { Database } from '@/lib/types'
 import { ReadinessBadge } from '@/components/StatusBadge'
+import { ActivityPlayer } from '@/components/activities/ActivityPlayer'
+import { activitiesForTrack } from '@/data/activities'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -63,6 +66,31 @@ export default function TrackDetail() {
   const timedFinal = db.assessments.find((a) => a.trackId === track.id && a.kind === 'timed_final')
   const finalUnlocked = completionPct >= 60
 
+  // Estimated seat time: lesson minutes + assessment time (est. 45s/question).
+  const trackAssessments = db.assessments.filter((a) => a.trackId === track.id)
+  const lessonMinutes = lessons.reduce((s, l) => s + l.durationMin, 0)
+  const assessMinutes = Math.round(
+    trackAssessments.reduce((s, a) => s + a.questionIds.length * 0.75, 0),
+  )
+  const seatMinutes = lessonMinutes + assessMinutes
+  const seatLabel = `${Math.floor(seatMinutes / 60)}h ${seatMinutes % 60}m`
+
+  // Weak skills from topic stats (needs a few attempts to be meaningful).
+  const weakSkills = Object.entries(progress?.topicStats ?? {})
+    .filter(([, s]) => s.attempted >= 3)
+    .map(([topic, s]) => ({ topic, acc: s.correct / s.attempted, attempted: s.attempted }))
+    .sort((a, b) => a.acc - b.acc)
+    .slice(0, 4)
+
+  // Recommended next step: first module containing an unfinished lesson.
+  const nextModule = modules.find((mod) =>
+    lessons.some(
+      (l) => l.moduleId === mod.id && !(progress?.completedLessonIds.includes(l.id) ?? false),
+    ),
+  )
+
+  const trackActivities = activitiesForTrack(track.id)
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Breadcrumb>
@@ -101,8 +129,55 @@ export default function TrackDetail() {
             <span className="tabular-nums">{doneLessons} / {lessons.length} lessons · {pct(completionPct)}</span>
           </div>
           <Progress value={completionPct} />
+          <div className="flex flex-wrap gap-x-5 gap-y-1 pt-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Estimated seat time: {seatLabel}</span>
+            <span>{modules.length} modules · {trackAssessments.length} assessments</span>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Recommended next step + weak skills */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {nextModule && (
+          <Card>
+            <CardContent className="flex h-full flex-col justify-between gap-3 p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended next step</p>
+                <p className="mt-1 text-sm font-medium">{nextModule.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{nextModule.description}</p>
+              </div>
+              <Button size="sm" className="self-start" asChild>
+                <Link to={`/app/student/track/${track.id}/module/${nextModule.id}`}>
+                  Continue <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        <Card>
+          <CardContent className="p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TrendingDown className="h-3.5 w-3.5" /> Focus areas
+            </p>
+            {weakSkills.length > 0 ? (
+              <ul className="mt-2 space-y-1.5">
+                {weakSkills.map((w) => (
+                  <li key={w.topic} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate">{w.topic}</span>
+                    <Badge variant="outline" className="shrink-0 border-amber-200 bg-amber-50 text-amber-700 tabular-nums">
+                      {pct(w.acc * 100)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Answer more practice questions and your personalized focus areas will appear here.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -153,7 +228,13 @@ export default function TrackDetail() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{mod.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">{mod.description}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Progress
+                          value={modLessons.length > 0 ? (modDone / modLessons.length) * 100 : 0}
+                          className="h-1.5 w-24"
+                        />
+                        <p className="truncate text-xs text-muted-foreground">{mod.description}</p>
+                      </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="hidden text-xs tabular-nums text-muted-foreground sm:inline">
@@ -216,6 +297,38 @@ export default function TrackDetail() {
           })}
         </Accordion>
       </div>
+
+      {trackActivities.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <Gamepad2 className="h-5 w-5 text-primary" /> Interactive simulations and activities
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Hands-on practice for this track — matching, sequencing, scenarios, and calculations with instant feedback.
+          </p>
+          <Accordion type="multiple" className="space-y-3">
+            {trackActivities.map((act) => (
+              <AccordionItem key={act.id} value={act.id} className="rounded-lg border bg-white px-4">
+                <AccordionTrigger className="py-3 hover:no-underline">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 pr-2 text-left">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{act.title}</p>
+                      <p className="truncate text-xs text-muted-foreground">{act.instructions}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="outline" className="capitalize">{act.type.replace('_', ' ')}</Badge>
+                      <span className="text-xs text-muted-foreground">~{act.estMinutes} min</span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <ActivityPlayer activity={act} />
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      )}
 
       {timedFinal && (
         <Card className={finalUnlocked ? 'border-blue-200' : ''}>

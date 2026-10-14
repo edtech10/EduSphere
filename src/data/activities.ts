@@ -1,0 +1,756 @@
+// Interactive activities ("simulations") for flagship tracks.
+// All content is original and credential-aligned; activities are rendered by
+// generic players in components/activities/.
+import type { Activity } from '@/lib/types'
+
+export const ACTIVITIES: Activity[] = [
+  // ---------- Clinical Laboratory Assisting (track_cla) ----------
+  {
+    id: 'act_cla_labeling', trackId: 'track_cla', moduleId: null,
+    title: 'Specimen Labeling Activity', type: 'matching',
+    instructions: 'Match each specimen to the label information that must be verified before accessioning.',
+    difficulty: 'easy', estMinutes: 5,
+    pairs: [
+      { left: 'Blood culture bottle', right: 'Two patient identifiers, date/time, collector initials, site' },
+      { left: 'Routine chemistry tube', right: 'Two identifiers, date/time, collector initials' },
+      { left: '24-hour urine container', right: 'Identifiers plus collection start and end times' },
+      { left: 'Unlabeled tube found in rack', right: 'Cannot be labeled later — must be recollected' },
+      { left: 'STAT specimen', right: 'Identifiers plus priority marking and immediate delivery' },
+    ],
+  },
+  {
+    id: 'act_cla_order_of_draw', trackId: 'track_cla', moduleId: null,
+    title: 'Order of Draw Sequencing', type: 'sequencing',
+    instructions: 'Arrange the tubes in the correct order of draw to prevent additive carry-over.',
+    difficulty: 'medium', estMinutes: 5,
+    steps: [
+      'Blood culture (sterile) tubes',
+      'Light blue — coagulation (citrate)',
+      'Red / gold — serum (no additive or gel)',
+      'Green — heparin',
+      'Lavender — EDTA',
+      'Gray — fluoride/oxalate',
+    ],
+  },
+  {
+    id: 'act_cla_hazards', trackId: 'track_cla', moduleId: null,
+    title: 'Lab Safety Hazard Spotting', type: 'spotting',
+    instructions: 'Review the lab scene description and tap every item that violates laboratory safety rules.',
+    difficulty: 'medium', estMinutes: 6,
+    spots: [
+      { text: 'Open-toed shoes worn at the bench', isIssue: true, note: 'Labs require closed, fluid-resistant footwear.' },
+      { text: 'Centrifuge lid locked and balanced tubes inside', isIssue: false, note: 'Balanced, closed centrifugation is correct practice.' },
+      { text: 'Sandwich and drink on the workbench', isIssue: true, note: 'No food or drink in the laboratory — ever.' },
+      { text: 'Sharps container filled above the fill line', isIssue: true, note: 'Overfilled sharps containers cause needlestick injuries.' },
+      { text: 'Gloves worn while using the shared phone', isIssue: true, note: 'Gloves contaminate clean surfaces; remove them first.' },
+      { text: 'SDS binder accessible at the bench', isIssue: false, note: 'Safety data sheets must be readily available.' },
+    ],
+  },
+  {
+    id: 'act_cla_ppe', trackId: 'track_cla', moduleId: null,
+    title: 'PPE Selection Scenario', type: 'matching',
+    instructions: 'Match each task to the minimum PPE required.',
+    difficulty: 'easy', estMinutes: 4,
+    pairs: [
+      { left: 'Routine venipuncture', right: 'Gloves; lab coat' },
+      { left: 'Pouring off a specimen (splash risk)', right: 'Gloves, lab coat, and face protection' },
+      { left: 'Cleaning a small blood spill', right: 'Gloves, lab coat, and appropriate disinfectant contact time' },
+      { left: 'Working at a computer in the office area', right: 'No PPE — PPE stays in the lab zone' },
+    ],
+  },
+  {
+    id: 'act_cla_waived', trackId: 'track_cla', moduleId: null,
+    title: 'Waived Testing Workflow', type: 'sequencing',
+    instructions: 'Put the waived glucose testing workflow in the correct order.',
+    difficulty: 'medium', estMinutes: 5,
+    steps: [
+      'Verify patient identity with two identifiers',
+      'Check the test device and strips are in date',
+      'Perform and document quality control',
+      'Collect the sample following the package insert',
+      'Run the test and read the result',
+      'Record the result and report per policy',
+      'Dispose of sharps and disinfect the area',
+    ],
+  },
+  {
+    id: 'act_cla_qc', trackId: 'track_cla', moduleId: null,
+    title: 'Quality Control Interpretation', type: 'scenario',
+    instructions: 'Read the QC situation and choose the correct response.',
+    difficulty: 'hard', estMinutes: 4,
+    scenario: {
+      prompt: 'The morning glucose control reads 2 SD above the target mean, outside the acceptable range. Patient samples are waiting. What should happen next?',
+      options: [
+        'Run patients anyway — controls often drift',
+        'Repeat the control; if still out, troubleshoot before any patient testing',
+        'Throw out the control vial and open a new lot',
+        'Report patient results with a disclaimer',
+      ],
+      correctIndex: 1,
+      feedback: 'Out-of-range QC means the system is not verified. Repeat, troubleshoot, and document before patient results are released.',
+    },
+  },
+  {
+    id: 'act_cla_micro', trackId: 'track_cla', moduleId: null,
+    title: 'Microbiology Basics Matching', type: 'matching',
+    instructions: 'Match each microbiology term to its correct description.',
+    difficulty: 'medium', estMinutes: 5,
+    pairs: [
+      { left: 'Gram stain', right: 'Separates bacteria into purple (positive) and pink (negative) groups' },
+      { left: 'Culture', right: 'Growing organisms on media to identify them' },
+      { left: 'Aseptic technique', right: 'Practices that prevent contamination of specimens and cultures' },
+      { left: 'Incubation', right: 'Holding cultures at controlled temperature to support growth' },
+      { left: 'Antibiotic susceptibility', right: 'Testing which antibiotics inhibit the isolated organism' },
+    ],
+  },
+  {
+    id: 'act_cla_patient_id', trackId: 'track_cla', moduleId: null,
+    title: 'Patient Identification Scenario', type: 'scenario',
+    instructions: 'Choose the action that protects patient safety.',
+    difficulty: 'easy', estMinutes: 3,
+    scenario: {
+      prompt: 'A patient in room 412 is asleep. The wristband is on the far arm. A coworker says, "Just draw it — I know it is Mr. Lane." What do you do?',
+      options: [
+        'Draw the blood; the coworker confirmed identity',
+        'Wake the patient, verify two identifiers against the wristband and requisition',
+        'Label the tube with the room number',
+        'Skip the draw and mark the patient as refused',
+      ],
+      correctIndex: 1,
+      feedback: 'Identification requires two independent identifiers, actively verified. Room numbers and coworker memory are never identifiers.',
+    },
+  },
+  {
+    id: 'act_cla_rejection', trackId: 'track_cla', moduleId: null,
+    title: 'Specimen Rejection Decision', type: 'matching',
+    instructions: 'Decide: accept or reject? Match each specimen to the correct disposition.',
+    difficulty: 'hard', estMinutes: 6,
+    pairs: [
+      { left: 'Hemolyzed potassium sample', right: 'Reject — hemolysis falsely elevates potassium' },
+      { left: 'Properly labeled lavender tube, full draw', right: 'Accept — meets all criteria' },
+      { left: 'Unlabeled tube with a note saying "John in 3B"', right: 'Reject — unlabeled specimens are recollected' },
+      { left: 'Citrate tube filled to half the fill line', right: 'Reject — incorrect blood-to-anticoagulant ratio' },
+      { left: 'Fasting sample collected at the documented time', right: 'Accept — timing and labeling verified' },
+    ],
+  },
+  {
+    id: 'act_cla_workflow', trackId: 'track_cla', moduleId: null,
+    title: 'Lab Workflow Simulation', type: 'sequencing',
+    instructions: 'Arrange the pre-analytic to post-analytic workflow in order.',
+    difficulty: 'medium', estMinutes: 5,
+    steps: [
+      'Test ordered and requisition generated',
+      'Patient identified and specimen collected',
+      'Specimen labeled at the bedside',
+      'Transport to the laboratory',
+      'Accessioning and inspection for acceptability',
+      'Analysis on the instrument',
+      'Result review and release',
+    ],
+  },
+
+  // ---------- FAA Part 107 Remote Pilot (track_p107) ----------
+  {
+    id: 'act_p107_airspace', trackId: 'track_p107', moduleId: null,
+    title: 'Airspace Identification Drill', type: 'matching',
+    instructions: 'Match each airspace class to its defining rule for drone operations.',
+    difficulty: 'medium', estMinutes: 6,
+    pairs: [
+      { left: 'Class B', right: 'Busiest airports — authorization required, dense traffic' },
+      { left: 'Class C', right: 'Mid-size towered airports — authorization required' },
+      { left: 'Class D', right: 'Smaller towered airports — authorization required' },
+      { left: 'Class E', right: 'Controlled airspace without a tower — check floor altitude' },
+      { left: 'Class G', right: 'Uncontrolled — no authorization needed, fly by the rules' },
+    ],
+  },
+  {
+    id: 'act_p107_sectional', trackId: 'track_p107', moduleId: null,
+    title: 'Sectional Chart Interpretation', type: 'scenario',
+    instructions: 'Use the chart description to make the correct call.',
+    difficulty: 'hard', estMinutes: 5,
+    scenario: {
+      prompt: 'Your planned survey site sits inside a dashed magenta circle marking Class E airspace starting at 700 feet AGL, 3 miles from a non-towered airport. Your planned altitude is 400 feet AGL. What applies?',
+      options: [
+        'You need FAA authorization because the airport is nearby',
+        'You are in Class G below 700 ft AGL — no authorization needed, but monitor for aircraft',
+        'You may not fly within 5 miles of any airport',
+        'You must file a flight plan with the tower',
+      ],
+      correctIndex: 1,
+      feedback: 'Class E beginning at 700 ft AGL leaves Class G below it. Part 107 operations in Class G need no authorization, but vigilance near airports is essential.',
+    },
+  },
+  {
+    id: 'act_p107_metar', trackId: 'track_p107', moduleId: null,
+    title: 'METAR Decoding', type: 'review_quiz',
+    instructions: 'Decode elements of this METAR: KXYZ 181753Z 24012G20KT 10SM -RA BKN045 OCN090 18/14 A2992.',
+    difficulty: 'medium', estMinutes: 6,
+    questions: [
+      { q: 'The wind is reported as:', choices: ['240° at 12 knots, gusting 20', '24 knots gusting 20', '240 knots at 12', 'Variable at 12 knots'], answer: 0, why: 'Wind is direction (240°) then speed (12KT) with gusts (G20KT).' },
+      { q: 'Visibility is:', choices: ['10 statute miles', '10 nautical miles', '1,050 meters', '10 kilometers'], answer: 0, why: 'SM = statute miles; 10SM is the maximum reported value.' },
+      { q: 'The ceiling (lowest broken or overcast layer) is:', choices: ['4,500 ft AGL', '9,000 ft AGL', '450 ft AGL', 'There is no ceiling'], answer: 0, why: 'BKN045 is the lowest broken layer: 4,500 ft — the ceiling.' },
+      { q: 'A2992 means:', choices: ['Altimeter 29.92 inHg', 'Temperature 29.92°C', 'Runway 29 in use', 'Visibility 2.99 miles'], answer: 0, why: 'The A-group encodes altimeter setting in hundredths of inches of mercury.' },
+    ],
+  },
+  {
+    id: 'act_p107_weather', trackId: 'track_p107', moduleId: null,
+    title: 'Weather Decision Scenario', type: 'scenario',
+    instructions: 'Make the go / no-go decision.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'Forecast for your 2 PM mapping flight: winds 18 gusting 28 knots, ceiling 1,200 ft, visibility 4 miles in light rain. Your aircraft is rated to 20 knots. The client wants the footage today. Decision?',
+      options: [
+        'Fly — the ceiling is well above 400 ft',
+        'Fly but stay below 200 ft to avoid the wind',
+        'Postpone — gusts exceed aircraft limits and visibility is below the 3-mile minimum... just barely legal, but margins are thin',
+        'Fly indoors instead',
+      ],
+      correctIndex: 2,
+      feedback: 'Gusts of 28 knots exceed the aircraft rating, and light rain degrades visibility and electronics. The safe, professional call is to postpone and reschedule.',
+    },
+  },
+  {
+    id: 'act_p107_preflight', trackId: 'track_p107', moduleId: null,
+    title: 'Drone Preflight Checklist', type: 'checklist',
+    instructions: 'Select every item that belongs in a Part 107 preflight. Skip items that do not.',
+    difficulty: 'easy', estMinutes: 5,
+    checklist: [
+      { item: 'Inspect airframe, props, and motors for damage', required: true },
+      { item: 'Verify battery charge and secure seating', required: true },
+      { item: 'Check airspace authorization for the location', required: true },
+      { item: 'Confirm firmware and app are up to date', required: true },
+      { item: 'Review weather: wind, visibility, precipitation', required: true },
+      { item: 'Paint the aircraft a high-visibility color', required: false, note: 'Helpful, not required.' },
+      { item: 'File a flight plan with the nearest tower', required: false, note: 'Part 107 does not use tower-filed flight plans.' },
+      { item: 'Brief the visual observer and crew on roles', required: true },
+    ],
+  },
+  {
+    id: 'act_p107_risk', trackId: 'track_p107', moduleId: null,
+    title: 'Remote Pilot Risk Assessment', type: 'scenario',
+    instructions: 'Identify the highest-risk element of this operation.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'A real-estate flight is planned over a residential street at 3 PM: gusty wind, trees near the takeoff point, bystanders watching from a porch, and the pilot flew three jobs already today. Which factor most increases risk?',
+      options: [
+        'The time of day',
+        'The combination of wind, obstacles, people nearby, and pilot fatigue — all compound',
+        'The residential neighborhood itself',
+        'The camera equipment weight',
+      ],
+      correctIndex: 1,
+      feedback: 'Risk factors compound: weather + obstacles + people + fatigue. A structured preflight risk assessment catches the stack-up before launch.',
+    },
+  },
+  {
+    id: 'act_p107_laanc', trackId: 'track_p107', moduleId: null,
+    title: 'LAANC Authorization Scenario', type: 'scenario',
+    instructions: 'Choose the correct authorization path.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'A client needs photos at a site inside Class D airspace where the LAANC grid map shows a 200-ft ceiling. The job requires 350 ft AGL. What is the correct path?',
+      options: [
+        'Fly at 350 ft — LAANC ceilings are advisory',
+        'Request near-real-time LAANC authorization at 350 ft and launch immediately',
+        'Request authorization above the grid ceiling through the FAA DroneZone manual process, which takes longer — or fly at or below 200 ft with LAANC',
+        'Cancel — drones can never fly in Class D',
+      ],
+      correctIndex: 2,
+      feedback: 'LAANC grants up to the grid ceiling in near real time; operations above it require a manual authorization request with longer lead time.',
+    },
+  },
+  {
+    id: 'act_p107_battery', trackId: 'track_p107', moduleId: null,
+    title: 'Battery Safety Activity', type: 'spotting',
+    instructions: 'Tap every unsafe battery practice.',
+    difficulty: 'easy', estMinutes: 4,
+    spots: [
+      { text: 'Charging a swollen lithium battery overnight in the van', isIssue: true, note: 'Swollen packs are a fire risk — retire and dispose of them properly.' },
+      { text: 'Storing batteries at partial charge in a cool, dry case', isIssue: false, note: 'Correct storage practice.' },
+      { text: 'Using a battery that was dropped onto concrete', isIssue: true, note: 'Impact damage can cause internal shorts — inspect and retire if damaged.' },
+      { text: 'Letting a hot battery cool before charging', isIssue: false, note: 'Charging hot packs accelerates degradation — cooling first is correct.' },
+      { text: 'Carrying loose batteries in a pocket with keys', isIssue: true, note: 'Metal objects can short the terminals.' },
+    ],
+  },
+  {
+    id: 'act_p107_crm', trackId: 'track_p107', moduleId: null,
+    title: 'Crew Resource Management Scenario', type: 'scenario',
+    instructions: 'Apply crew coordination principles.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'Mid-flight, your visual observer spots a helicopter approaching low and calls it out. You are lining up a critical shot. What is the correct response?',
+      options: [
+        'Finish the shot quickly, then descend',
+        'Ask the observer to keep watching while you continue',
+        'Immediately maneuver to give way — the remote pilot must yield to all manned aircraft',
+        'Climb above the helicopter’s path',
+      ],
+      correctIndex: 2,
+      feedback: 'Part 107 aircraft must always yield right-of-way to manned aircraft. Crew calls are acted on immediately — never debated mid-flight.',
+    },
+  },
+  {
+    id: 'act_p107_emergency', trackId: 'track_p107', moduleId: null,
+    title: 'Emergency Procedure Decision', type: 'sequencing',
+    instructions: 'Order the correct response to a sudden flyaway (loss of control link).',
+    difficulty: 'hard', estMinutes: 4,
+    steps: [
+      'Announce the emergency to crew and clear people from below',
+      'Attempt to re-establish link per manufacturer procedure',
+      'If link is not restored, note last known position and flight path',
+      'Notify authorities if the aircraft poses a hazard or leaves the area',
+      'Document the event and review before the next flight',
+    ],
+  },
+
+  // ---------- Aviation Maintenance (track_amt / airframe / powerplant) ----------
+  {
+    id: 'act_amt_tools', trackId: 'track_amt', moduleId: null,
+    title: 'Tool Identification', type: 'matching',
+    instructions: 'Match each tool to its correct use in aircraft maintenance.',
+    difficulty: 'easy', estMinutes: 5,
+    pairs: [
+      { left: 'Torque wrench', right: 'Applies a specified fastener tightness' },
+      { left: 'Safety wire pliers', right: 'Twists locking wire to secure fasteners' },
+      { left: 'Multimeter', right: 'Measures voltage, current, and resistance' },
+      { left: 'Micrometer', right: 'Measures dimensions to thousandths of an inch' },
+      { left: 'Rivet gun', right: 'Drives solid rivets in sheet metal structure' },
+    ],
+  },
+  {
+    id: 'act_amt_publications', trackId: 'track_amt', moduleId: null,
+    title: 'Maintenance Publication Lookup', type: 'scenario',
+    instructions: 'Choose the correct reference source.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'You need the approved torque value for a specific bolt on a Cessna 172 landing gear. Where is the authoritative value found?',
+      options: [
+        'A general aviation forum thread',
+        'The aircraft manufacturer’s maintenance manual for that model',
+        'Any automotive torque chart',
+        'Memory — standard bolts share one torque',
+      ],
+      correctIndex: 1,
+      feedback: 'Approved data for a specific aircraft comes from the manufacturer’s current maintenance publications — never memory or generic charts.',
+    },
+  },
+  {
+    id: 'act_amt_wiring', trackId: 'track_amt', moduleId: null,
+    title: 'Wiring Diagram Interpretation', type: 'matching',
+    instructions: 'Match each wiring diagram symbol description to its meaning.',
+    difficulty: 'medium', estMinutes: 5,
+    pairs: [
+      { left: 'Circle with wire number inside', right: 'Wire identification at a termination point' },
+      { left: 'Dashed line between components', right: 'Mechanical connection, not electrical' },
+      { left: 'Ground symbol', right: 'Connection to aircraft structure ground' },
+      { left: 'Switch symbol with two positions', right: 'Selector switch routing the circuit' },
+    ],
+  },
+  {
+    id: 'act_amt_ground_safety', trackId: 'track_amt', moduleId: null,
+    title: 'Ground Safety Inspection', type: 'spotting',
+    instructions: 'A ramp scene is described. Tap every unsafe condition.',
+    difficulty: 'medium', estMinutes: 5,
+    spots: [
+      { text: 'Chocks in place and parking brake set per procedure', isIssue: false, note: 'Correct securing practice.' },
+      { text: 'Loose tools left on the wing walk', isIssue: true, note: 'FOD and falling-object hazard — tools are accounted for after every task.' },
+      { text: 'Fuel truck bonding wire connected before fueling', isIssue: false, note: 'Bonding prevents static discharge — correct.' },
+      { text: 'Propeller arc clear and beacon on before engine start', isIssue: false, note: 'Standard safe start practice.' },
+      { text: 'Technician working under a raised component with no lock or support', isIssue: true, note: 'Never trust hydraulics alone — use locks or stands.' },
+      { text: 'Fire extinguisher charged and accessible nearby', isIssue: false, note: 'Required readiness.' },
+    ],
+  },
+  {
+    id: 'act_airframe_systems', trackId: 'track_airframe', moduleId: null,
+    title: 'Aircraft Systems Matching', type: 'matching',
+    instructions: 'Match each airframe system to its function.',
+    difficulty: 'medium', estMinutes: 5,
+    pairs: [
+      { left: 'Hydraulic system', right: 'Actuates brakes, gear, and flight controls' },
+      { left: 'Pitot-static system', right: 'Feeds airspeed, altitude, and vertical speed instruments' },
+      { left: 'Environmental system', right: 'Provides cabin pressurization and temperature control' },
+      { left: 'Fuel system', right: 'Stores and delivers fuel to the engines' },
+      { left: 'Landing gear system', right: 'Supports the aircraft on the ground and absorbs landing loads' },
+    ],
+  },
+  {
+    id: 'act_amt_wb_calc', trackId: 'track_amt', moduleId: null,
+    title: 'Weight and Balance Calculator', type: 'calculator',
+    instructions: 'Compute the total moment and check the center of gravity.',
+    difficulty: 'hard', estMinutes: 6,
+    calculator: {
+      givens: [
+        { label: 'Empty weight × arm', value: '1,500 lb × 39 in = 58,500 lb·in' },
+        { label: 'Pilot + passenger', value: '340 lb × 37 in = 12,580 lb·in' },
+        { label: 'Fuel (24 gal)', value: '144 lb × 48 in = 6,912 lb·in' },
+      ],
+      question: 'Total weight is 1,984 lb and total moment is 77,992 lb·in. What is the loaded CG in inches (moment ÷ weight), rounded to one decimal?',
+      answer: 39.3, tolerance: 0.15, unit: 'in',
+      explanation: '77,992 ÷ 1,984 = 39.31 in. Compare against the aircraft’s CG range in the POH to confirm loading is within limits.',
+    },
+  },
+  {
+    id: 'act_airframe_structures', trackId: 'track_airframe', moduleId: null,
+    title: 'Airframe Structures Scenario', type: 'scenario',
+    instructions: 'Choose the structurally correct action.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'During an inspection you find a crack stop-drilled at one end only, with the other end still propagating under a rivet line. The maintenance manual allows stop-drilling only when both ends are arrested. What is correct?',
+      options: [
+        'Monitor it at the next inspection',
+        'Stop-drill the visible end and return to service',
+        'Follow the manual: the repair is incomplete — arrest both ends or perform the specified repair before flight',
+        'Fill the crack with sealant',
+      ],
+      correctIndex: 2,
+      feedback: 'Structural repairs must exactly follow approved data; partial stop-drilling leaves the crack active.',
+    },
+  },
+  {
+    id: 'act_powerplant_trouble', trackId: 'track_powerplant', moduleId: null,
+    title: 'Powerplant Troubleshooting Flow', type: 'sequencing',
+    instructions: 'A rough-running engine is reported. Order a logical troubleshooting sequence.',
+    difficulty: 'hard', estMinutes: 5,
+    steps: [
+      'Interview the pilot and read the engine instruments history',
+      'Perform a ground run-up and note mag drop and temperatures',
+      'Inspect ignition leads, plugs, and induction for obvious faults',
+      'Check compression and fuel flow if basics are clean',
+      'Consult the troubleshooting chart for the specific symptom pattern',
+      'Document findings and the corrective action taken',
+    ],
+  },
+  {
+    id: 'act_amt_logbook', trackId: 'track_amt', moduleId: null,
+    title: 'Logbook Entry Practice', type: 'review_quiz',
+    instructions: 'Answer based on proper maintenance record practices.',
+    difficulty: 'medium', estMinutes: 5,
+    questions: [
+      { q: 'A maintenance record entry must include at minimum:', choices: ['The technician’s opinion of the aircraft', 'Description of work performed, date, and signature with certificate number', 'The owner’s phone number', 'Weather during the work'], answer: 1, why: 'Work description, date of completion, and signature/certificate are the required elements.' },
+      { q: 'An airworthiness directive (AD) is:', choices: ['Optional guidance', 'A mandatory corrective action issued by the FAA', 'A warranty notice', 'A marketing bulletin'], answer: 1, why: 'ADs are regulatory and must be complied with as specified.' },
+      { q: '"Approved for return to service" is signed by:', choices: ['Any pilot', 'An appropriately certificated mechanic or repair station', 'The aircraft owner only', 'The airport manager'], answer: 1, why: 'Only certificated persons authorized for the work may approve return to service.' },
+    ],
+  },
+  {
+    id: 'act_amt_review', trackId: 'track_amt', moduleId: null,
+    title: 'FAA-Style Knowledge Review', type: 'review_quiz',
+    instructions: 'Original General-area review questions in certification style.',
+    difficulty: 'medium', estMinutes: 6,
+    questions: [
+      { q: 'Which publication lists the required inspections for a specific aircraft?', choices: ['The pilot operating handbook only', 'The manufacturer’s maintenance manual and applicable regulations', 'A magazine article', 'The fueling guide'], answer: 1, why: 'Inspection requirements come from approved manufacturer data and the regulations.' },
+      { q: 'Specific gravity of electrolyte is checked with a:', choices: ['Multimeter', 'Hydrometer', 'Torque wrench', 'Manometer'], answer: 1, why: 'A hydrometer measures electrolyte specific gravity.' },
+      { q: 'When computing weight and balance, the arm is:', choices: ['The distance from the datum to the item', 'The weight of the item', 'The fuel quantity', 'The wing length'], answer: 0, why: 'Arm is the horizontal distance from the reference datum.' },
+      { q: 'Safety wire is installed so it:', choices: ['Loosens the fastener gradually', 'Pulls the fastener tighter if it tries to turn loose', 'Decorates the assembly', 'Grounds the component'], answer: 1, why: 'Wire tension opposes loosening rotation.' },
+    ],
+  },
+
+  // ---------- IT Support (track_itsupport) ----------
+  {
+    id: 'act_it_triage', trackId: 'track_itsupport', moduleId: null,
+    title: 'Help Desk Ticket Triage', type: 'matching',
+    instructions: 'Assign each ticket the correct priority.',
+    difficulty: 'easy', estMinutes: 5,
+    pairs: [
+      { left: 'Company-wide email outage', right: 'P1 — critical: many users, business stopped' },
+      { left: 'Executive cannot print before a board meeting', right: 'P2 — high: urgent for one user, workaround exists' },
+      { left: 'One user’s mouse is double-clicking', right: 'P3 — normal: single user, minor impact' },
+      { left: 'Request to install a new font', right: 'P4 — low: request, no incident' },
+      { left: 'Server room temperature alarm', right: 'P1 — critical: infrastructure risk' },
+    ],
+  },
+  {
+    id: 'act_it_network', trackId: 'track_itsupport', moduleId: null,
+    title: 'Network Troubleshooting Scenario', type: 'sequencing',
+    instructions: 'Order the troubleshooting steps from first to last.',
+    difficulty: 'medium', estMinutes: 5,
+    steps: [
+      'Confirm the symptom and scope — one user or many',
+      'Check physical layer: cables, link lights, Wi-Fi association',
+      'Verify IP configuration (address, gateway, DNS)',
+      'Test connectivity: ping gateway, then external, then DNS lookup',
+      'Escalate with documented findings if unresolved',
+    ],
+  },
+  {
+    id: 'act_it_hardware', trackId: 'track_itsupport', moduleId: null,
+    title: 'Hardware Identification', type: 'matching',
+    instructions: 'Match each component to its role.',
+    difficulty: 'easy', estMinutes: 4,
+    pairs: [
+      { left: 'RAM', right: 'Volatile working memory for running programs' },
+      { left: 'SSD', right: 'Persistent storage with no moving parts' },
+      { left: 'PSU', right: 'Converts wall power to regulated DC for components' },
+      { left: 'NIC', right: 'Connects the machine to the network' },
+      { left: 'CPU', right: 'Executes instructions — the processor' },
+    ],
+  },
+  {
+    id: 'act_it_phishing', trackId: 'track_itsupport', moduleId: null,
+    title: 'Phishing Identification', type: 'spotting',
+    instructions: 'An email is described. Tap every red flag.',
+    difficulty: 'easy', estMinutes: 4,
+    spots: [
+      { text: 'Sender address is it-support@company-secure-verify.net', isIssue: true, note: 'Lookalike domain — classic phishing signal.' },
+      { text: 'Subject: "URGENT: your account closes in 1 hour"', isIssue: true, note: 'Manufactured urgency pressures mistakes.' },
+      { text: 'Greeting uses your full name correctly', isIssue: false, note: 'Names are public data — not proof of legitimacy either way.' },
+      { text: 'Link text says intranet.company.com but hovers to an unrelated URL', isIssue: true, note: 'Mismatched link targets are a definitive warning sign.' },
+      { text: 'It asks you to reply with your password for "verification"', isIssue: true, note: 'No legitimate IT department asks for passwords.' },
+      { text: 'It references last week’s real company all-hands meeting', isIssue: false, note: 'Plausible context alone is not a red flag, though it does not prove legitimacy.' },
+    ],
+  },
+  {
+    id: 'act_it_password', trackId: 'track_itsupport', moduleId: null,
+    title: 'Password Security Scenario', type: 'scenario',
+    instructions: 'Choose the best practice.',
+    difficulty: 'easy', estMinutes: 3,
+    scenario: {
+      prompt: 'A new employee asks how to handle their many work passwords. Which advice is correct?',
+      options: [
+        'Use one strong password everywhere so it is easy to remember',
+        'Use a password manager with unique passwords per site plus MFA where offered',
+        'Write passwords on a note under the keyboard',
+        'Share a team password for shared tools',
+      ],
+      correctIndex: 1,
+      feedback: 'Unique passwords in a manager plus MFA is the professional baseline; reuse and sharing defeat both.',
+    },
+  },
+
+  // ---------- Cybersecurity Foundations (track_cyberfound) ----------
+  {
+    id: 'act_cyber_ir_timeline', trackId: 'track_cyberfound', moduleId: null,
+    title: 'Incident Response Timeline', type: 'sequencing',
+    instructions: 'Order the phases of the incident response lifecycle.',
+    difficulty: 'medium', estMinutes: 5,
+    steps: [
+      'Preparation — plans, tools, and training in place',
+      'Detection and analysis — identify and scope the incident',
+      'Containment — stop the spread',
+      'Eradication — remove the threat',
+      'Recovery — restore systems safely',
+      'Lessons learned — improve defenses',
+    ],
+  },
+  {
+    id: 'act_cyber_access', trackId: 'track_cyberfound', moduleId: null,
+    title: 'Access Control Matching', type: 'matching',
+    instructions: 'Match each authentication factor to its category.',
+    difficulty: 'easy', estMinutes: 4,
+    pairs: [
+      { left: 'Password', right: 'Something you know' },
+      { left: 'Hardware security key', right: 'Something you have' },
+      { left: 'Fingerprint', right: 'Something you are' },
+      { left: 'One-time code from an app', right: 'Something you have (device)' },
+      { left: 'Security question answer', right: 'Something you know' },
+    ],
+  },
+  {
+    id: 'act_cyber_cli', trackId: 'track_cyberfound', moduleId: null,
+    title: 'Command-Line Basics Simulator', type: 'matching',
+    instructions: 'Match each command to what it does.',
+    difficulty: 'medium', estMinutes: 5,
+    pairs: [
+      { left: 'ipconfig / ifconfig', right: 'Show network interface configuration' },
+      { left: 'ping', right: 'Test reachability of a host' },
+      { left: 'tracert / traceroute', right: 'Show the path packets take to a host' },
+      { left: 'nslookup', right: 'Query DNS records for a name' },
+      { left: 'netstat', right: 'List active network connections and listening ports' },
+    ],
+  },
+  {
+    id: 'act_cyber_policy', trackId: 'track_cyberfound', moduleId: null,
+    title: 'Security Policy Decision Activity', type: 'scenario',
+    instructions: 'Apply policy to a realistic situation.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'A salesperson wants to email a spreadsheet of customer data to their personal account to "work on it over the weekend." Policy prohibits customer data on personal accounts. Their manager verbally approves. What is correct?',
+      options: [
+        'Allow it — the manager approved',
+        'Refuse and route the request through the documented exception process with data protection alternatives',
+        'Allow it if the spreadsheet is zipped',
+        'Delete the file instead',
+      ],
+      correctIndex: 1,
+      feedback: 'Verbal approval does not override data policy. Exceptions need documented approval and compensating controls.',
+    },
+  },
+  {
+    id: 'act_cyber_vuln', trackId: 'track_cyberfound', moduleId: null,
+    title: 'Vulnerability Classification Drill', type: 'matching',
+    instructions: 'Classify each finding by severity rationale.',
+    difficulty: 'hard', estMinutes: 5,
+    pairs: [
+      { left: 'Internet-facing server with unpatched remote-code-execution flaw', right: 'Critical — exploitable from anywhere, full compromise possible' },
+      { left: 'Internal app missing security headers', right: 'Low — defense-in-depth issue, limited direct impact' },
+      { left: 'Workstation with default admin password on the office LAN', right: 'High — trivial lateral movement once inside' },
+      { left: 'Website reveals exact server version in banners', right: 'Informational/low — aids reconnaissance only' },
+    ],
+  },
+
+  // ---------- OSHA Safety (track_osha10g) ----------
+  {
+    id: 'act_osha_hazards', trackId: 'track_osha10g', moduleId: null,
+    title: 'OSHA Hazard Spotting', type: 'spotting',
+    instructions: 'A workshop scene is described. Tap every OSHA-recognizable hazard.',
+    difficulty: 'medium', estMinutes: 5,
+    spots: [
+      { text: 'Extension cord daisy-chained across a walkway', isIssue: true, note: 'Trip hazard plus overloaded temporary wiring.' },
+      { text: 'Guard removed from a bench grinder "for a quick job"', isIssue: true, note: 'Guards must be in place during operation — no exceptions.' },
+      { text: 'Flammable liquids stored in labeled safety cans', isIssue: false, note: 'Correct storage practice.' },
+      { text: 'Blocked fire extinguisher behind stacked pallets', isIssue: true, note: 'Extinguishers must remain accessible at all times.' },
+      { text: 'Worker on a ladder’s top cap', isIssue: true, note: 'The top cap is not a step — a leading fall cause.' },
+      { text: 'Safety data sheets posted and current', isIssue: false, note: 'Hazard communication requirement met.' },
+    ],
+  },
+  {
+    id: 'act_osha_loto', trackId: 'track_osha10g', moduleId: null,
+    title: 'Lockout/Tagout Sequencing', type: 'sequencing',
+    instructions: 'Order the lockout/tagout procedure correctly.',
+    difficulty: 'hard', estMinutes: 5,
+    steps: [
+      'Notify affected employees that lockout will occur',
+      'Identify all energy sources for the equipment',
+      'Shut down the equipment using normal controls',
+      'Isolate energy sources and apply locks and tags',
+      'Release or restrain stored energy',
+      'Verify zero energy by attempting start-up',
+      'Perform the service work',
+      'Remove locks after inspection and notify before re-energizing',
+    ],
+  },
+  {
+    id: 'act_osha_incident', trackId: 'track_osha10g', moduleId: null,
+    title: 'Safety Incident Review', type: 'scenario',
+    instructions: 'Choose the correct post-incident action.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'A worker’s glove catches in a drill press, causing a minor hand injury. The supervisor wants to "handle it quietly" since no time was lost. What does policy and OSHA practice require?',
+      options: [
+        'Quiet handling is fine for minor injuries',
+        'Provide first aid, document and investigate the incident, correct the root cause (e.g., glove policy near rotating machinery)',
+        'Discipline the worker publicly',
+        'Wait to see if it happens again',
+      ],
+      correctIndex: 1,
+      feedback: 'Every incident gets care, documentation, and root-cause correction — near-misses and minor injuries are free warnings.',
+    },
+  },
+  {
+    id: 'act_osha_tools', trackId: 'track_osha10g', moduleId: null,
+    title: 'Tool Selection Activity', type: 'matching',
+    instructions: 'Match the task to the correct tool practice.',
+    difficulty: 'easy', estMinutes: 4,
+    pairs: [
+      { left: 'Removing a corroded bolt', right: 'Correct-size wrench or socket — never a cheater bar on a hand tool' },
+      { left: 'Cutting sheet metal', right: 'Snips or shear with cut-resistant gloves' },
+      { left: 'Drilling masonry', right: 'Hammer drill with eye and hearing protection' },
+      { left: 'Reaching overhead work', right: 'Proper ladder or platform — never a chair or bucket' },
+    ],
+  },
+
+  // ---------- Robotics (track_robotics) ----------
+  {
+    id: 'act_rob_parts', trackId: 'track_robotics', moduleId: null,
+    title: 'Robotics Parts Identification', type: 'matching',
+    instructions: 'Match each robotics component to its function.',
+    difficulty: 'easy', estMinutes: 4,
+    pairs: [
+      { left: 'Microcontroller', right: 'The robot’s decision-making brain' },
+      { left: 'Ultrasonic sensor', right: 'Measures distance using sound pulses' },
+      { left: 'Servo motor', right: 'Moves to a commanded angle with feedback' },
+      { left: 'Line-follow sensor array', right: 'Detects contrast between line and surface' },
+      { left: 'Motor driver', right: 'Supplies controlled power to motors from logic signals' },
+    ],
+  },
+  {
+    id: 'act_rob_sensor', trackId: 'track_robotics', moduleId: null,
+    title: 'Sensor Troubleshooting', type: 'scenario',
+    instructions: 'Diagnose the sensor fault logically.',
+    difficulty: 'medium', estMinutes: 4,
+    scenario: {
+      prompt: 'A line-following robot drifts right on every run. Code is unchanged and worked yesterday. What is the most productive first check?',
+      options: [
+        'Rewrite the control algorithm',
+        'Inspect and clean the left line sensor and verify its readings against a known surface',
+        'Replace both motors',
+        'Increase battery voltage',
+      ],
+      correctIndex: 1,
+      feedback: 'Consistent directional drift with unchanged code points to a hardware input problem — verify sensor readings before touching code or motors.',
+    },
+  },
+  {
+    id: 'act_rob_circuit', trackId: 'track_robotics', moduleId: null,
+    title: 'Basic Circuit Matching', type: 'matching',
+    instructions: 'Match each circuit concept to its definition.',
+    difficulty: 'medium', estMinutes: 4,
+    pairs: [
+      { left: 'Voltage', right: 'Electrical pressure pushing current, measured in volts' },
+      { left: 'Current', right: 'Flow of charge, measured in amperes' },
+      { left: 'Resistance', right: 'Opposition to current flow, measured in ohms' },
+      { left: 'Series circuit', right: 'One path — current is identical through each component' },
+      { left: 'Parallel circuit', right: 'Multiple paths — voltage is identical across each branch' },
+    ],
+  },
+  {
+    id: 'act_rob_tolerance', trackId: 'track_robotics', moduleId: null,
+    title: 'Measurement and Tolerance', type: 'calculator',
+    instructions: 'Apply tolerance to a shaft measurement.',
+    difficulty: 'medium', estMinutes: 4,
+    calculator: {
+      givens: [
+        { label: 'Specified dimension', value: '25.00 mm ± 0.05 mm' },
+        { label: 'Measured part', value: '25.06 mm' },
+      ],
+      question: 'What is the maximum acceptable dimension in mm (nominal + tolerance)?',
+      answer: 25.05, tolerance: 0.001, unit: 'mm',
+      explanation: 'Upper limit = 25.00 + 0.05 = 25.05 mm. The 25.06 mm part exceeds the limit and is rejected.',
+    },
+  },
+  {
+    id: 'act_rob_design', trackId: 'track_robotics', moduleId: null,
+    title: 'Engineering Design Process Simulation', type: 'sequencing',
+    instructions: 'Order the engineering design process.',
+    difficulty: 'easy', estMinutes: 4,
+    steps: [
+      'Define the problem and constraints',
+      'Research and gather requirements',
+      'Brainstorm multiple solutions',
+      'Select and plan the best concept',
+      'Build a prototype',
+      'Test against requirements',
+      'Iterate and improve',
+      'Document and present the solution',
+    ],
+  },
+  {
+    id: 'act_rob_pm', trackId: 'track_robotics', moduleId: null,
+    title: 'Preventive Maintenance Checklist', type: 'checklist',
+    instructions: 'Select the items that belong on a robot preventive maintenance schedule.',
+    difficulty: 'easy', estMinutes: 4,
+    checklist: [
+      { item: 'Inspect wiring and connectors for wear', required: true },
+      { item: 'Check and calibrate sensors on schedule', required: true },
+      { item: 'Lubricate moving joints per manufacturer spec', required: true },
+      { item: 'Verify emergency stop function', required: true },
+      { item: 'Replace all batteries after every run regardless of condition', required: false, note: 'Condition-based replacement, not automatic.' },
+      { item: 'Test firmware rollback procedure', required: true },
+      { item: 'Decorate the chassis each quarter', required: false, note: 'Cosmetic work is not preventive maintenance.' },
+    ],
+  },
+]
+
+const byTrack = new Map<string, Activity[]>()
+for (const a of ACTIVITIES) {
+  const list = byTrack.get(a.trackId) ?? []
+  list.push(a)
+  byTrack.set(a.trackId, list)
+}
+
+export function activitiesForTrack(trackId: string): Activity[] {
+  return byTrack.get(trackId) ?? []
+}
+
+export function getActivity(id: string): Activity | undefined {
+  return ACTIVITIES.find((a) => a.id === id)
+}

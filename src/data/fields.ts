@@ -82,6 +82,16 @@ export const FIELDS: Field[] = [
       'Readiness tracks for pre-engineering, robotics, manufacturing fundamentals, CAD design, OSHA 10 safety, and the engineering design process.',
     color: '#dc2626',
   },
+  {
+    id: 'automotive',
+    slug: 'automotive',
+    name: 'Automotive',
+    shortName: 'Auto',
+    tagline: 'Service fundamentals, electrical, and diagnostics readiness',
+    description:
+      'Readiness tracks for automotive service fundamentals, electrical systems, and entry-level diagnostics — shop safety, tools, and systems knowledge for entry-level service credentials.',
+    color: '#ea580c',
+  },
 ]
 
 export function getField(id: FieldId): Field {

@@ -40,15 +40,15 @@ export const PLANS: Plan[] = [
   },
   {
     id: 'program',
-    name: 'Program License',
-    priceAnnual: null, // field-scoped: $39,500–$89,500
+    name: 'Multi-Field Program License',
+    priceAnnual: null, // field-scoped: $39,500–$89,500 (higher-priced of up to 2 fields)
     maxStudents: 60,
     maxTracks: 'all',
     perStudentAtFullUse: null,
     fieldScoped: true,
     features: [
       'Up to 60 students',
-      'All readiness tracks in one IRC field',
+      'All readiness tracks in up to 2 IRC fields',
       'Advanced analytics',
       'Multi-instructor access',
       'Quarterly readiness review',
@@ -73,7 +73,7 @@ export const PLANS: Plan[] = [
   },
   {
     id: 'enterprise',
-    name: 'Enterprise License',
+    name: 'Enterprise / District License',
     priceAnnual: null, // custom, starting at $175,000
     maxStudents: null,
     maxTracks: 'all',

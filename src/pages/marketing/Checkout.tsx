@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { PLANS, getPlan } from '@/data/plans'
-import { FIELDS } from '@/data/fields'
+import { FIELDS, getField } from '@/data/fields'
 import { priceFor, licenseLabel, ENTERPRISE_STARTS_AT, type LicenseTypeId } from '@/data/pricing'
 import { useAuth } from '@/lib/auth'
 import { useDB, updateDB, logAction, uid } from '@/lib/db'
@@ -36,13 +36,20 @@ export default function Checkout() {
   const isEnterprise = plan.id === 'enterprise'
   const paidPlans = PLANS.filter((p) => p.id !== 'enterprise')
 
-  // Field selection for field-scoped licenses (single / field / program)
+  // Field selection for field-scoped licenses (single / field / program).
+  // Program licenses cover up to 2 fields; the second field is optional.
   const [fieldId, setFieldId] = useState<FieldId>('healthcare')
+  const [fieldId2, setFieldId2] = useState<FieldId | ''>('')
+  const isProgram = plan.id === 'program'
   const price = plan.fieldScoped
-    ? priceFor(plan.id as LicenseTypeId, fieldId)
+    ? isProgram && fieldId2
+      ? Math.max(priceFor('program', fieldId), priceFor('program', fieldId2))
+      : priceFor(plan.id as LicenseTypeId, fieldId)
     : plan.priceAnnual
   const priceLabel = plan.fieldScoped
-    ? licenseLabel(plan.id as LicenseTypeId, fieldId)
+    ? isProgram && fieldId2
+      ? `${plan.name} — ${getField(fieldId).name} + ${getField(fieldId2).name}`
+      : licenseLabel(plan.id as LicenseTypeId, fieldId)
     : plan.name
 
   const orgId = user?.orgId ?? ''
@@ -280,7 +287,10 @@ export default function Checkout() {
                       })()
                     : 'Custom'}
               </p>
-              <p className="text-xs text-muted-foreground">Up to {p.maxStudents} students{p.fieldScoped ? ' · one field' : ''}</p>
+              <p className="text-xs text-muted-foreground">
+                Up to {p.maxStudents} students
+                {p.fieldScoped ? (p.id === 'program' ? ' · up to 2 fields' : ' · one field') : ''}
+              </p>
             </button>
           ))}
         </div>
@@ -305,24 +315,47 @@ export default function Checkout() {
                 {plan.fieldScoped
                   ? plan.id === 'single'
                     ? 'One credential track in the selected field'
-                    : 'All tracks in the selected field'
+                    : isProgram
+                      ? 'All tracks in up to 2 selected fields'
+                      : 'All tracks in the selected field'
                   : plan.id === 'academy'
                     ? 'Any 4 IRC fields'
                     : 'All credential tracks'}
               </p>
               {plan.fieldScoped && (
-                <div className="mt-3 max-w-xs">
-                  <Label className="mb-1.5 block text-xs">IRC field</Label>
-                  <Select value={fieldId} onValueChange={(v) => setFieldId(v as FieldId)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {FIELDS.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {f.name} — {formatUSD(priceFor(plan.id as LicenseTypeId, f.id))}/yr
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="mt-3 flex max-w-xl flex-col gap-3 sm:flex-row">
+                  <div className="flex-1">
+                    <Label className="mb-1.5 block text-xs">{isProgram ? 'Primary IRC field' : 'IRC field'}</Label>
+                    <Select value={fieldId} onValueChange={(v) => setFieldId(v as FieldId)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {FIELDS.map((f) => (
+                          <SelectItem key={f.id} value={f.id} disabled={f.id === fieldId2}>
+                            {f.name} — {formatUSD(priceFor(plan.id as LicenseTypeId, f.id))}/yr
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isProgram && (
+                    <div className="flex-1">
+                      <Label className="mb-1.5 block text-xs">Second field (optional)</Label>
+                      <Select value={fieldId2 || 'none'} onValueChange={(v) => setFieldId2(v === 'none' ? '' : (v as FieldId))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No second field</SelectItem>
+                          {FIELDS.filter((f) => f.id !== fieldId).map((f) => (
+                            <SelectItem key={f.id} value={f.id}>
+                              {f.name} — {formatUSD(priceFor('program', f.id))}/yr
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Priced at the higher of the two field rates.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

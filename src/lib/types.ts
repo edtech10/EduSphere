@@ -133,6 +133,7 @@ export type FieldId =
   | 'marketing'
   | 'aviation'
   | 'engineering'
+  | 'automotive'
 
 export interface Field {
   id: FieldId
@@ -163,6 +164,14 @@ export interface CredentialTrack {
   prerequisites?: string
   alignmentNotes?: string
   domains?: string[]
+  /** Content QA workflow metadata */
+  contentStatus?: ContentStatus
+  author?: string
+  reviewer?: string
+  version?: string
+  updatedAt?: string
+  internalNotes?: string
+  flaggedQuestions?: number
 }
 
 export interface Module {
@@ -198,9 +207,73 @@ export interface Lesson {
   sections?: LessonBlock[] // rich structured body
   callouts?: LessonCallout[]
   media?: { src: string; alt: string; caption?: string; type?: 'image' | 'video' }[]
+  enrichment?: LessonEnrichment
 }
 
-export type QuestionType = 'multiple_choice' | 'scenario' | 'true_false'
+/** Rich lesson model: objective → scenario → teach → visual → activity →
+ * vocabulary → mistakes → quick check → remediation → instructor notes → worksheet. */
+export interface LessonEnrichment {
+  objective: string
+  scenario: string // real-world scenario that opens the lesson
+  visual: { title: string; description: string } // visual explanation block (diagram described)
+  activityId?: string // interactive activity rendered inline
+  vocabulary: { term: string; definition: string }[]
+  commonMistakes: string[]
+  quickCheck: { q: string; choices: string[]; answer: number; why: string }[]
+  remediation: string
+  instructorNotes: string
+  worksheet: string // printable worksheet / activity title + summary
+}
+
+export type ContentStatus = 'draft' | 'in_review' | 'published' | 'needs_revision'
+
+export type ResourceType =
+  | 'pacing_guide' | 'lesson_plan' | 'bell_ringer' | 'exit_ticket' | 'worksheet'
+  | 'small_group' | 'remediation_assignment' | 'skills_checklist' | 'lab_checklist'
+  | 'answer_key' | 'progress_report'
+
+export interface InstructorResource {
+  id: string
+  trackId: string
+  type: ResourceType
+  title: string
+  summary: string
+  items: string[]
+}
+
+export type ActivityType =
+  | 'matching' | 'sequencing' | 'scenario' | 'spotting' | 'checklist'
+  | 'calculator' | 'review_quiz'
+
+export interface Activity {
+  id: string
+  trackId: string
+  moduleId: string | null
+  title: string
+  type: ActivityType
+  instructions: string
+  difficulty: Difficulty
+  estMinutes: number
+  pairs?: { left: string; right: string }[] // matching
+  steps?: string[] // sequencing — listed in correct order
+  scenario?: { prompt: string; options: string[]; correctIndex: number; feedback: string }
+  spots?: { text: string; isIssue: boolean; note: string }[] // spotting
+  checklist?: { item: string; required: boolean; note?: string }[] // checklist
+  calculator?: {
+    givens: { label: string; value: string }[]
+    question: string
+    answer: number
+    tolerance: number
+    unit: string
+    explanation: string
+  }
+  questions?: { q: string; choices: string[]; answer: number; why: string }[] // review_quiz
+}
+
+export type QuestionType =
+  | 'multiple_choice' | 'scenario' | 'true_false'
+  | 'multi_select' | 'sequencing' | 'matching' | 'calculation'
+  | 'short_response' | 'hotspot' | 'case_study'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 
 export interface Question {
@@ -211,11 +284,27 @@ export interface Question {
   type: QuestionType
   difficulty: Difficulty
   text: string
-  choices: string[] // 2 for true/false, 4 otherwise
+  choices: string[] // 2 for true/false, 4 otherwise; option list for multi_select
   correctIndex: number
   explanation: string
   estimatedTimeSec: number
   tags: string[]
+  /** Rationale shown for a chosen wrong answer (index-aligned with choices). */
+  wrongRationales?: string[]
+  /** multi_select: all correct choice indexes. */
+  correctIndexes?: number[]
+  /** sequencing: items in correct order (UI shuffles). */
+  sequenceItems?: string[]
+  /** matching: left prompts with correct right matches. */
+  pairs?: { left: string; right: string }[]
+  /** calculation: numeric answer with tolerance. */
+  numericAnswer?: { value: number; tolerance: number; unit?: string }
+  /** short_response: acceptable keywords for self-check. */
+  keywords?: string[]
+  /** case_study / hotspot: shared stem or scene description shown above the question. */
+  caseStem?: string
+  /** readiness weight (default 1). */
+  weight?: number
 }
 
 export type AssessmentKind = 'diagnostic' | 'knowledge_check' | 'practice' | 'timed_final'

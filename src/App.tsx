@@ -49,6 +49,8 @@ import SuperSubscriptions from '@/pages/super/SuperSubscriptions'
 import SuperInvoiceRequests from '@/pages/super/SuperInvoiceRequests'
 import SuperUsers from '@/pages/super/SuperUsers'
 import SuperContent from '@/pages/super/SuperContent'
+import SuperTrackDetail from '@/pages/super/SuperTrackDetail'
+import SuperPreview from '@/pages/super/SuperPreview'
 import SuperAudit from '@/pages/super/SuperAudit'
 import SuperSettings from '@/pages/super/SuperSettings'
 
@@ -145,6 +147,8 @@ export default function App() {
           <Route path="/app/super/invoice-requests" element={<SuperInvoiceRequests />} />
           <Route path="/app/super/users" element={<SuperUsers />} />
           <Route path="/app/super/content" element={<SuperContent />} />
+          <Route path="/app/super/content/:trackId" element={<SuperTrackDetail />} />
+          <Route path="/app/super/preview/:trackId" element={<SuperPreview />} />
           <Route path="/app/super/audit" element={<SuperAudit />} />
           <Route path="/app/super/settings" element={<SuperSettings />} />
         </Route>

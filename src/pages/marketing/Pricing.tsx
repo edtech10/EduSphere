@@ -23,7 +23,7 @@ const FAQ = [
   },
   {
     q: 'What does a Field License include?',
-    a: 'A Field License unlocks every readiness track in one IRC field — for example, all Health Sciences tracks — for up to 25 students. Program Licenses raise that to 60 students in one field, and a Career Academy License covers any 4 fields for up to 150 students.',
+    a: 'A Field License unlocks every readiness track in one IRC field — for example, all Health Sciences tracks — for up to 25 students. A Multi-Field Program License raises that to 60 students across up to 2 fields, and a Career Academy License covers any 4 fields for up to 150 students.',
   },
   {
     q: 'Can we pay by invoice or purchase order?',
@@ -149,7 +149,7 @@ export default function Pricing() {
                     <th className="px-4 py-3 font-semibold">IRC field</th>
                     <th className="px-4 py-3 text-right font-semibold">Single Track<br /><span className="text-xs font-normal text-muted-foreground">10 seats · 1 track</span></th>
                     <th className="px-4 py-3 text-right font-semibold">Field License<br /><span className="text-xs font-normal text-muted-foreground">25 seats · all field tracks</span></th>
-                    <th className="px-4 py-3 text-right font-semibold">Program License<br /><span className="text-xs font-normal text-muted-foreground">60 seats · all field tracks</span></th>
+                    <th className="px-4 py-3 text-right font-semibold">Multi-Field Program<br /><span className="text-xs font-normal text-muted-foreground">60 seats · up to 2 fields</span></th>
                   </tr>
                 </thead>
                 <tbody>
