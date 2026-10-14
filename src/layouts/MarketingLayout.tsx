@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { label: 'Products', to: '/products' },
+  { label: 'IRC Catalog', to: '/catalog' },
   { label: 'Pricing', to: '/pricing' },
   { label: 'For Schools', to: '/for-schools' },
   { label: 'For Instructors', to: '/for-instructors' },
@@ -112,6 +113,7 @@ export function MarketingLayout() {
             <h4 className="text-sm font-semibold text-white">Product</h4>
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link className="hover:text-white" to="/products">Products</Link></li>
+              <li><Link className="hover:text-white" to="/catalog">IRC Catalog</Link></li>
               <li><Link className="hover:text-white" to="/products/healthcare-readiness">Healthcare Readiness System</Link></li>
               <li><Link className="hover:text-white" to="/pricing">Pricing</Link></li>
             </ul>

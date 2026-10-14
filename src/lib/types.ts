@@ -40,16 +40,18 @@ export interface User {
   lastActiveAt?: string
 }
 
-export type PlanId = 'starter' | 'growth' | 'program' | 'enterprise'
+export type PlanId = 'single' | 'field' | 'program' | 'academy' | 'enterprise'
 
 export interface Plan {
   id: PlanId
   name: string
-  priceAnnual: number | null // null = custom pricing
+  priceAnnual: number | null // null = field-dependent or custom pricing (see data/pricing.ts)
   maxStudents: number | null // null = unlimited
   maxTracks: number | 'all'
   perStudentAtFullUse: number | null
   features: string[]
+  /** True when the price depends on the chosen IRC field. */
+  fieldScoped?: boolean
 }
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
@@ -58,6 +60,8 @@ export interface Subscription {
   id: string
   orgId: string
   planId: PlanId
+  /** IRC field the license covers, for single-track / field / program licenses. */
+  fieldId?: FieldId | null
   status: SubscriptionStatus
   seats: number
   currentPeriodStart: string
@@ -120,6 +124,26 @@ export interface SeatLicense {
   updatedAt: string
 }
 
+export type FieldId =
+  | 'healthcare'
+  | 'it'
+  | 'cybersecurity'
+  | 'business'
+  | 'finance'
+  | 'marketing'
+  | 'aviation'
+  | 'engineering'
+
+export interface Field {
+  id: FieldId
+  slug: string
+  name: string
+  shortName: string
+  tagline: string
+  description: string
+  color: string
+}
+
 export interface CredentialTrack {
   id: string
   name: string
@@ -128,11 +152,17 @@ export interface CredentialTrack {
   credentialFocus: string
   estimatedWeeks: number
   color: string // tailwind-friendly hex for badges/charts
-  category: 'healthcare' | 'aviation'
+  category: FieldId
   isBundle?: boolean
   includedTrackIds?: string[]
   /** Track content exists in-app, but is not yet offered on marketing/checkout pages. */
   comingSoon?: boolean
+  /** Marketing/catalog metadata */
+  schoolOverview?: string
+  studentOverview?: string
+  prerequisites?: string
+  alignmentNotes?: string
+  domains?: string[]
 }
 
 export interface Module {

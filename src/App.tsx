@@ -8,6 +8,8 @@ import { RequireRole, RequireLicense } from '@/components/RequireAuth'
 import Home from '@/pages/marketing/Home'
 import Products from '@/pages/marketing/Products'
 import HealthcareReadiness from '@/pages/marketing/HealthcareReadiness'
+import Catalog from '@/pages/marketing/Catalog'
+import FieldPage from '@/pages/marketing/FieldPage'
 import Pricing from '@/pages/marketing/Pricing'
 import ForSchools from '@/pages/marketing/ForSchools'
 import ForInstructors from '@/pages/marketing/ForInstructors'
@@ -59,6 +61,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/healthcare-readiness" element={<HealthcareReadiness />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/fields/:slug" element={<FieldPage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/for-schools" element={<ForSchools />} />
           <Route path="/for-instructors" element={<ForInstructors />} />

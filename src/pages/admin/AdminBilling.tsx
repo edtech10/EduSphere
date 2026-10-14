@@ -65,7 +65,7 @@ export default function AdminBilling() {
               Activate a cohort license to manage billing for {org?.name ?? 'your organization'}.
             </p>
             <Button asChild>
-              <Link to="/checkout?plan=growth">Choose a plan</Link>
+              <Link to="/checkout?plan=field">Choose a plan</Link>
             </Button>
           </CardContent>
         </Card>

@@ -12,10 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { PLANS, getPlan } from '@/data/plans'
+import { FIELDS } from '@/data/fields'
+import { priceFor, licenseLabel, ENTERPRISE_STARTS_AT, type LicenseTypeId } from '@/data/pricing'
 import { useAuth } from '@/lib/auth'
 import { useDB, updateDB, logAction, uid } from '@/lib/db'
 import { formatUSD, formatDate } from '@/lib/format'
-import type { PlanId } from '@/lib/types'
+import type { FieldId, PlanId } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const TIMELINE_OPTIONS = ['Immediately', 'This quarter', 'Next semester (2–3 months)', 'Exploring']
@@ -26,17 +28,31 @@ export default function Checkout() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const planParam = searchParams.get('plan') ?? 'growth'
-  const planId: PlanId = (['starter', 'growth', 'program', 'enterprise'] as PlanId[]).includes(planParam as PlanId)
+  const planParam = searchParams.get('plan') ?? 'field'
+  const planId: PlanId = (['single', 'field', 'program', 'academy', 'enterprise'] as PlanId[]).includes(planParam as PlanId)
     ? (planParam as PlanId)
-    : 'growth'
+    : 'field'
   const plan = getPlan(planId)
   const isEnterprise = plan.id === 'enterprise'
-  const paidPlans = PLANS.filter((p) => p.priceAnnual !== null)
+  const paidPlans = PLANS.filter((p) => p.id !== 'enterprise')
+
+  // Field selection for field-scoped licenses (single / field / program)
+  const [fieldId, setFieldId] = useState<FieldId>('healthcare')
+  const price = plan.fieldScoped
+    ? priceFor(plan.id as LicenseTypeId, fieldId)
+    : plan.priceAnnual
+  const priceLabel = plan.fieldScoped
+    ? licenseLabel(plan.id as LicenseTypeId, fieldId)
+    : plan.name
 
   const orgId = user?.orgId ?? ''
   const org = db.organizations.find((o) => o.id === orgId)
   const concreteTracks = db.tracks.filter((t) => !t.isBundle && !t.comingSoon)
+  const trackGroups = FIELDS.map((f) => ({
+    field: f.name,
+    color: f.color,
+    tracks: concreteTracks.filter((t) => t.category === f.id).map((t) => ({ id: t.id, name: t.name })),
+  })).filter((g) => g.tracks.length > 0)
 
   // Card form state
   const [cardName, setCardName] = useState(user?.name ?? '')
@@ -76,7 +92,7 @@ export default function Checkout() {
 
   const handlePay = (e: FormEvent) => {
     e.preventDefault()
-    if (!user || !orgId || plan.priceAnnual === null) return
+    if (!user || !orgId || price === null) return
     setProcessing(true)
     window.setTimeout(() => {
       const now = new Date().toISOString()
@@ -89,6 +105,7 @@ export default function Checkout() {
           id: subId,
           orgId,
           planId: plan.id,
+          fieldId: plan.fieldScoped ? fieldId : plan.id === 'academy' ? null : null,
           status: 'active',
           seats,
           currentPeriodStart: now,
@@ -102,11 +119,11 @@ export default function Checkout() {
           id: uid('pay'),
           orgId,
           subscriptionId: subId,
-          amount: plan.priceAnnual!,
+          amount: price,
           currency: 'usd',
           status: 'succeeded',
           method: 'card',
-          description: `${plan.name} — annual subscription`,
+          description: `${priceLabel} — annual subscription`,
           createdAt: now,
           stripePaymentIntentId: uid('pi'),
         })
@@ -124,7 +141,7 @@ export default function Checkout() {
         user.id,
         user.name,
         'subscription.created',
-        `${plan.name} subscription activated for ${org?.name ?? orgId} (${seats} seats, card payment)`,
+        `${priceLabel} subscription activated for ${org?.name ?? orgId} (${seats} seats, card payment)`,
         orgId,
       )
       setProcessing(false)
@@ -183,7 +200,7 @@ export default function Checkout() {
               </span>
               <h1 className="text-2xl font-bold tracking-tight">Subscription active</h1>
               <p className="mt-3 text-muted-foreground">
-                Your {plan.name} license is active with {plan.maxStudents ?? 0} student seats through{' '}
+                Your {priceLabel} license is active with {plan.maxStudents ?? 0} student seats through{' '}
                 {formatDate(periodEnd)}. Your organization is ready — invite instructors and students
                 to get started.
               </p>
@@ -233,12 +250,12 @@ export default function Checkout() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Checkout</h1>
           <p className="mt-2 text-muted-foreground">
-            Activate your school's {plan.name} license.
+            Activate your school's {priceLabel} license.
           </p>
         </div>
 
         {/* Plan switcher */}
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {paidPlans.map((p) => (
             <button
               key={p.id}
@@ -251,10 +268,19 @@ export default function Checkout() {
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">{p.name}</p>
-                {p.id === plan.id && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                {p.id === plan.id && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
               </div>
-              <p className="mt-1 text-lg font-bold tabular-nums">{formatUSD(p.priceAnnual!)}<span className="text-xs font-normal text-muted-foreground"> / year</span></p>
-              <p className="text-xs text-muted-foreground">Up to {p.maxStudents} students</p>
+              <p className="mt-1 text-sm font-bold tabular-nums">
+                {p.priceAnnual !== null
+                  ? <>{formatUSD(p.priceAnnual)}<span className="text-xs font-normal text-muted-foreground"> / year</span></>
+                  : p.fieldScoped
+                    ? (() => {
+                        const prices = FIELDS.map((f) => priceFor(p.id as LicenseTypeId, f.id))
+                        return `${formatUSD(Math.min(...prices))}–${formatUSD(Math.max(...prices))}`
+                      })()
+                    : 'Custom'}
+              </p>
+              <p className="text-xs text-muted-foreground">Up to {p.maxStudents} students{p.fieldScoped ? ' · one field' : ''}</p>
             </button>
           ))}
         </div>
@@ -271,22 +297,43 @@ export default function Checkout() {
         {/* Selected plan summary */}
         <Card className="mb-8">
           <CardContent className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected plan</p>
-              <p className="mt-1 text-xl font-bold">{plan.name}</p>
+            <div className="flex-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected license</p>
+              <p className="mt-1 text-xl font-bold">{priceLabel}</p>
               <p className="text-sm text-muted-foreground">
                 {plan.maxStudents !== null ? `Up to ${plan.maxStudents} student seats` : 'Unlimited student seats'} ·{' '}
-                {plan.maxTracks === 'all' ? 'All credential tracks' : `${plan.maxTracks} track${plan.maxTracks === 1 ? '' : 's'}`}
+                {plan.fieldScoped
+                  ? plan.id === 'single'
+                    ? 'One credential track in the selected field'
+                    : 'All tracks in the selected field'
+                  : plan.id === 'academy'
+                    ? 'Any 4 IRC fields'
+                    : 'All credential tracks'}
               </p>
+              {plan.fieldScoped && (
+                <div className="mt-3 max-w-xs">
+                  <Label className="mb-1.5 block text-xs">IRC field</Label>
+                  <Select value={fieldId} onValueChange={(v) => setFieldId(v as FieldId)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FIELDS.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name} — {formatUSD(priceFor(plan.id as LicenseTypeId, f.id))}/yr
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <div className="text-left sm:text-right">
-              {plan.priceAnnual !== null ? (
-                <p className="text-2xl font-bold tabular-nums">{formatUSD(plan.priceAnnual)}<span className="text-sm font-normal text-muted-foreground"> / year</span></p>
+              {price !== null ? (
+                <p className="text-2xl font-bold tabular-nums">{formatUSD(price)}<span className="text-sm font-normal text-muted-foreground"> / year</span></p>
               ) : (
-                <p className="text-xl font-bold">Custom pricing</p>
+                <p className="text-xl font-bold">From {formatUSD(ENTERPRISE_STARTS_AT)}</p>
               )}
-              {plan.perStudentAtFullUse !== null && (
-                <p className="text-xs text-muted-foreground">{formatUSD(plan.perStudentAtFullUse)} per student at full use</p>
+              {price !== null && plan.maxStudents && (
+                <p className="text-xs text-muted-foreground">{formatUSD(Math.round(price / plan.maxStudents))} per student at full use</p>
               )}
             </div>
           </CardContent>
@@ -314,7 +361,7 @@ export default function Checkout() {
                 tracks={invTracks} toggleTrack={toggleTrack}
                 timeline={invTimeline} setTimeline={setInvTimeline}
                 notes={invNotes} setNotes={setInvNotes}
-                concreteTracks={concreteTracks}
+                trackGroups={trackGroups}
                 error={invError}
                 onSubmit={handleInvoice}
               />
@@ -371,11 +418,11 @@ export default function Checkout() {
                     <Separator />
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-muted-foreground">Total due today</p>
-                      <p className="text-xl font-bold tabular-nums">{formatUSD(plan.priceAnnual!)}</p>
+                      <p className="text-xl font-bold tabular-nums">{formatUSD(price ?? 0)}</p>
                     </div>
                     <Button type="submit" className="w-full" size="lg" disabled={processing}>
                       <Lock className="mr-2 h-4 w-4" />
-                      {processing ? 'Processing…' : `Pay ${formatUSD(plan.priceAnnual!)}`}
+                      {processing ? 'Processing…' : `Pay ${formatUSD(price ?? 0)}`}
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
                       No real payment is processed in the demo sandbox. Live card processing will be
@@ -408,7 +455,7 @@ export default function Checkout() {
                     tracks={invTracks} toggleTrack={toggleTrack}
                     timeline={invTimeline} setTimeline={setInvTimeline}
                     notes={invNotes} setNotes={setInvNotes}
-                    concreteTracks={concreteTracks}
+                    trackGroups={trackGroups}
                     error={invError}
                     onSubmit={handleInvoice}
                   />
@@ -431,7 +478,7 @@ function InvoiceForm({
   tracks, toggleTrack,
   timeline, setTimeline,
   notes, setNotes,
-  concreteTracks,
+  trackGroups,
   error,
   onSubmit,
 }: {
@@ -443,7 +490,7 @@ function InvoiceForm({
   tracks: string[]; toggleTrack: (name: string) => void
   timeline: string; setTimeline: (v: string) => void
   notes: string; setNotes: (v: string) => void
-  concreteTracks: { id: string; name: string }[]
+  trackGroups: { field: string; color: string; tracks: { id: string; name: string }[] }[]
   error: string | null
   onSubmit: (e: FormEvent) => void
 }) {
@@ -488,15 +535,25 @@ function InvoiceForm({
       </div>
       <div className="space-y-2">
         <Label>Desired tracks</Label>
-        <div className="space-y-2 rounded-lg border p-4">
-          {concreteTracks.map((track) => (
-            <label key={track.id} className="flex items-center gap-3 text-sm">
-              <Checkbox
-                checked={tracks.includes(track.name)}
-                onCheckedChange={() => toggleTrack(track.name)}
-              />
-              {track.name}
-            </label>
+        <div className="max-h-80 space-y-4 overflow-y-auto rounded-lg border p-4">
+          {trackGroups.map((g) => (
+            <div key={g.field}>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide" style={{ color: g.color }}>
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: g.color }} />
+                {g.field}
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {g.tracks.map((track) => (
+                  <label key={track.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={tracks.includes(track.name)}
+                      onCheckedChange={() => toggleTrack(track.name)}
+                    />
+                    {track.name}
+                  </label>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

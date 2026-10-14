@@ -1,7 +1,7 @@
 // Seed database — demo organizations, users, licenses, payments and progress.
 // All names are fictional demo data. No real schools or students.
 import type { Database } from '@/lib/types'
-import { TRACKS, MODULES, LESSONS, QUESTIONS, ASSESSMENTS } from './content'
+import { TRACKS, MODULES, LESSONS, QUESTIONS, ASSESSMENTS } from './content-all'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring'
 
 const now = new Date()
@@ -48,12 +48,16 @@ export function buildSeedDatabase(): Database {
     { id: 'user_nv_admin', orgId: 'org_northview', name: 'Dana Whitfield', email: 'admin@northview.edu', password: 'demo123', role: 'school_admin', title: 'Program Director', createdAt: daysAgo(210), lastActiveAt: daysAgo(1) },
     { id: 'user_nv_inst1', orgId: 'org_northview', name: 'Elena Ruiz', email: 'instructor@northview.edu', password: 'demo123', role: 'instructor', title: 'Allied Health Instructor', createdAt: daysAgo(205), lastActiveAt: daysAgo(0) },
     { id: 'user_nv_inst2', orgId: 'org_northview', name: 'James Carter', email: 'j.carter@northview.edu', password: 'demo123', role: 'instructor', title: 'Clinical Skills Instructor', createdAt: daysAgo(198), lastActiveAt: daysAgo(2) },
+    { id: 'user_nv_inst3', orgId: 'org_northview', name: 'Daniel Osei', email: 'd.osei@northview.edu', password: 'demo123', role: 'instructor', title: 'IT & Cybersecurity Instructor', createdAt: daysAgo(190), lastActiveAt: daysAgo(0) },
+    { id: 'user_nv_inst4', orgId: 'org_northview', name: 'Grace Whitman', email: 'g.whitman@northview.edu', password: 'demo123', role: 'instructor', title: 'Business & Finance Instructor', createdAt: daysAgo(185), lastActiveAt: daysAgo(1) },
     // Harbor
     { id: 'user_hb_admin', orgId: 'org_harbor', name: 'Marcus Bell', email: 'admin@harboracademy.org', password: 'demo123', role: 'school_admin', title: 'Academy Director', createdAt: daysAgo(120), lastActiveAt: daysAgo(3) },
     { id: 'user_hb_inst1', orgId: 'org_harbor', name: 'Sofia Nguyen', email: 'instructor@harboracademy.org', password: 'demo123', role: 'instructor', title: 'Phlebotomy Instructor', createdAt: daysAgo(118), lastActiveAt: daysAgo(1) },
+    { id: 'user_hb_inst2', orgId: 'org_harbor', name: 'Luis Ortega', email: 'l.ortega@harboracademy.org', password: 'demo123', role: 'instructor', title: 'Health Sciences Instructor', createdAt: daysAgo(110), lastActiveAt: daysAgo(2) },
     // Summit
     { id: 'user_sm_admin', orgId: 'org_summit', name: 'Priya Raman', email: 'admin@summitworkforce.org', password: 'demo123', role: 'school_admin', title: 'Workforce Programs Lead', createdAt: daysAgo(64), lastActiveAt: daysAgo(0) },
     { id: 'user_sm_inst1', orgId: 'org_summit', name: 'Tom Alvarez', email: 'instructor@summitworkforce.org', password: 'demo123', role: 'instructor', title: 'Healthcare Careers Instructor', createdAt: daysAgo(60), lastActiveAt: daysAgo(1) },
+    { id: 'user_sm_inst2', orgId: 'org_summit', name: 'Rachel Kim', email: 'r.kim@summitworkforce.org', password: 'demo123', role: 'instructor', title: 'Aviation & Engineering Instructor', createdAt: daysAgo(55), lastActiveAt: daysAgo(0) },
   ]
 
   // Students — fictional demo accounts
@@ -88,11 +92,64 @@ export function buildSeedDatabase(): Database {
     })),
   )
 
+  // ---- Generated students (fictional, deterministic) ----
+  // 65 additional demo students bring the total to 80 across the three schools.
+  const GEN_FIRST = ['Aiden', 'Bella', 'Caleb', 'Dalia', 'Elias', 'Farrah', 'Gavin', 'Hana', 'Isaac', 'Jasmine', 'Kai', 'Luna', 'Mateo', 'Nadia', 'Oscar', 'Paloma', 'Ruben', 'Sana', 'Tobias', 'Uma', 'Victor', 'Willa', 'Xavier', 'Yara', 'Zane', 'Amara', 'Bennett', 'Cora', 'Darius', 'Elif']
+  const GEN_LAST = ['Adler', 'Bishop', 'Calloway', 'Dunn', 'Espinoza', 'Flynn', 'Gallagher', 'Herrera', 'Ingram', 'Jeffers', 'Kaur', 'Lindqvist', 'McAllister', 'Nakamura', 'Osborne', 'Peralta', 'Quintero', 'Rasmussen', 'Serrano', 'Thornton', 'Ueda', 'Valenzuela', 'Winters', 'Xiong', 'Yates', 'Zamora']
+
+  function mulberry32(seed: number) {
+    return () => {
+      seed |= 0; seed = (seed + 0x6d2b79f5) | 0
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+  }
+
+  interface GenStudent { id: string; orgId: string; name: string; email: string; rand: () => number }
+  const genStudents: GenStudent[] = []
+  const orgQuotas = [
+    { orgId: 'org_northview', prefix: 'nv', domain: 'student.northview.edu', count: 17, offset: 9 },
+    { orgId: 'org_harbor', prefix: 'hb', domain: 'student.harboracademy.org', count: 6, offset: 5 },
+    { orgId: 'org_summit', prefix: 'sm', domain: 'student.summitworkforce.org', count: 42, offset: 4 },
+  ]
+  let gi = 0
+  for (const q of orgQuotas) {
+    for (let k = 0; k < q.count; k++) {
+      const rand = mulberry32(1000 + gi * 97)
+      const first = GEN_FIRST[Math.floor(rand() * GEN_FIRST.length)]
+      const last = GEN_LAST[Math.floor(rand() * GEN_LAST.length)]
+      const n = q.offset + k
+      genStudents.push({
+        id: `stu_${q.prefix}_g${String(n).padStart(2, '0')}`,
+        orgId: q.orgId,
+        name: `${first} ${last}`,
+        email: `${first.toLowerCase()}.${last.toLowerCase()}${n}@${q.domain}`,
+        rand,
+      })
+      gi++
+    }
+  }
+
+  users.push(
+    ...genStudents.map((s, i) => ({
+      id: s.id,
+      orgId: s.orgId,
+      name: s.name,
+      email: s.email,
+      password: 'demo123',
+      role: 'student' as const,
+      createdAt: daysAgo(20 + (i % 60)),
+      lastActiveAt: daysAgo(i % 7),
+    })),
+  )
+
   const subscriptions: Database['subscriptions'] = [
     {
       id: 'sub_northview',
       orgId: 'org_northview',
-      planId: 'growth',
+      planId: 'field',
+      fieldId: 'healthcare',
       status: 'active',
       seats: 25,
       currentPeriodStart: daysAgo(180),
@@ -105,7 +162,8 @@ export function buildSeedDatabase(): Database {
     {
       id: 'sub_harbor',
       orgId: 'org_harbor',
-      planId: 'starter',
+      planId: 'single',
+      fieldId: 'healthcare',
       status: 'past_due',
       seats: 10,
       currentPeriodStart: daysAgo(110),
@@ -119,6 +177,7 @@ export function buildSeedDatabase(): Database {
       id: 'sub_summit',
       orgId: 'org_summit',
       planId: 'program',
+      fieldId: 'healthcare',
       status: 'active',
       seats: 60,
       currentPeriodStart: daysAgo(60),
@@ -131,11 +190,11 @@ export function buildSeedDatabase(): Database {
   ]
 
   const payments: Database['payments'] = [
-    { id: 'pay_001', orgId: 'org_northview', subscriptionId: 'sub_northview', amount: 31500, currency: 'usd', status: 'succeeded', method: 'card', description: 'Growth Cohort — annual subscription', createdAt: daysAgo(180), stripePaymentIntentId: 'pi_demo_001' },
-    { id: 'pay_002', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 14500, currency: 'usd', status: 'succeeded', method: 'card', description: 'Starter Cohort — annual subscription', createdAt: daysAgo(110), stripePaymentIntentId: 'pi_demo_002' },
-    { id: 'pay_003', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 14500, currency: 'usd', status: 'failed', method: 'card', description: 'Starter Cohort — renewal attempt', createdAt: daysAgo(9), stripePaymentIntentId: 'pi_demo_003', failureReason: 'Card declined (insufficient funds)' },
-    { id: 'pay_004', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 14500, currency: 'usd', status: 'failed', method: 'card', description: 'Starter Cohort — renewal retry', createdAt: daysAgo(4), stripePaymentIntentId: 'pi_demo_004', failureReason: 'Card declined (do not honor)' },
-    { id: 'pay_005', orgId: 'org_summit', subscriptionId: 'sub_summit', amount: 59500, currency: 'usd', status: 'succeeded', method: 'invoice', description: 'Program License — annual (invoice INV-1042)', createdAt: daysAgo(58), stripePaymentIntentId: null },
+    { id: 'pay_001', orgId: 'org_northview', subscriptionId: 'sub_northview', amount: 37500, currency: 'usd', status: 'succeeded', method: 'card', description: 'Field License — Health Sciences (annual)', createdAt: daysAgo(180), stripePaymentIntentId: 'pi_demo_001' },
+    { id: 'pay_002', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'succeeded', method: 'card', description: 'Single Track License — Health Sciences (annual)', createdAt: daysAgo(110), stripePaymentIntentId: 'pi_demo_002' },
+    { id: 'pay_003', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'failed', method: 'card', description: 'Single Track License — renewal attempt', createdAt: daysAgo(9), stripePaymentIntentId: 'pi_demo_003', failureReason: 'Card declined (insufficient funds)' },
+    { id: 'pay_004', orgId: 'org_harbor', subscriptionId: 'sub_harbor', amount: 12500, currency: 'usd', status: 'failed', method: 'card', description: 'Single Track License — renewal retry', createdAt: daysAgo(4), stripePaymentIntentId: 'pi_demo_004', failureReason: 'Card declined (do not honor)' },
+    { id: 'pay_005', orgId: 'org_summit', subscriptionId: 'sub_summit', amount: 69500, currency: 'usd', status: 'succeeded', method: 'invoice', description: 'Program License — Health Sciences (annual, invoice INV-1042)', createdAt: daysAgo(58), stripePaymentIntentId: null },
   ]
 
   const invoiceRequests: Database['invoiceRequests'] = [
@@ -161,7 +220,7 @@ export function buildSeedDatabase(): Database {
       phone: '(555) 610-4480',
       studentCount: 12,
       desiredTracks: ['Clinical Laboratory Assisting Readiness'],
-      planId: 'growth',
+      planId: 'field',
       timeline: 'This quarter',
       notes: 'Grant-funded program; purchase order required before activation.',
       status: 'new',
@@ -197,17 +256,18 @@ export function buildSeedDatabase(): Database {
   ]
 
   const seatLicenses: Database['seatLicenses'] = [
-    { id: 'seat_northview', orgId: 'org_northview', totalSeats: 25, usedSeats: 8, updatedAt: daysAgo(5) },
-    { id: 'seat_harbor', orgId: 'org_harbor', totalSeats: 10, usedSeats: 4, updatedAt: daysAgo(12) },
-    { id: 'seat_summit', orgId: 'org_summit', totalSeats: 60, usedSeats: 3, updatedAt: daysAgo(20) },
+    { id: 'seat_northview', orgId: 'org_northview', totalSeats: 25, usedSeats: 25, updatedAt: daysAgo(5) },
+    { id: 'seat_harbor', orgId: 'org_harbor', totalSeats: 10, usedSeats: 10, updatedAt: daysAgo(12) },
+    { id: 'seat_summit', orgId: 'org_summit', totalSeats: 60, usedSeats: 45, updatedAt: daysAgo(20) },
   ]
 
   // Enrollments
   const enrollments: Database['enrollments'] = [
     { id: 'enr_001', studentId: 'stu_demo', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
-    { id: 'enr_001b', studentId: 'stu_demo', trackId: 'track_phleb', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(40), status: 'active' },
-    { id: 'enr_001c', studentId: 'stu_demo', trackId: 'track_cla', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(38), status: 'active' },
-    { id: 'enr_001d', studentId: 'stu_demo', trackId: 'track_amt', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(35), status: 'active' },
+    { id: 'enr_001b', studentId: 'stu_demo', trackId: 'track_itsupport', orgId: 'org_northview', assignedBy: 'user_nv_inst3', assignedAt: daysAgo(40), status: 'active' },
+    { id: 'enr_001c', studentId: 'stu_demo', trackId: 'track_cyberfound', orgId: 'org_northview', assignedBy: 'user_nv_inst3', assignedAt: daysAgo(38), status: 'active' },
+    { id: 'enr_001d', studentId: 'stu_demo', trackId: 'track_p107', orgId: 'org_northview', assignedBy: 'user_sm_inst2', assignedAt: daysAgo(35), status: 'active' },
+    { id: 'enr_001e', studentId: 'stu_demo', trackId: 'track_robotics', orgId: 'org_northview', assignedBy: 'user_nv_inst4', assignedAt: daysAgo(33), status: 'active' },
     { id: 'enr_002', studentId: 'stu_nv_02', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
     { id: 'enr_003', studentId: 'stu_nv_03', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(44), status: 'active' },
     { id: 'enr_004', studentId: 'stu_nv_04', trackId: 'track_phleb', orgId: 'org_northview', assignedBy: 'user_nv_inst2', assignedAt: daysAgo(40), status: 'active' },
@@ -226,6 +286,34 @@ export function buildSeedDatabase(): Database {
     { id: 'enr_017', studentId: 'stu_sm_03', trackId: 'track_amt', orgId: 'org_summit', assignedBy: 'user_sm_inst1', assignedAt: daysAgo(15), status: 'active' },
   ]
 
+  // Generated enrollments: spread students across all 8 IRC fields.
+  const GEN_TRACK_IDS = TRACKS.filter((t) => !t.isBundle).map((t) => t.id)
+  const instructorByOrg: Record<string, string[]> = {
+    org_northview: ['user_nv_inst1', 'user_nv_inst2', 'user_nv_inst3', 'user_nv_inst4'],
+    org_harbor: ['user_hb_inst1', 'user_hb_inst2'],
+    org_summit: ['user_sm_inst1', 'user_sm_inst2'],
+  }
+  let enrCounter = 100
+  for (const s of genStudents) {
+    const nTracks = s.rand() < 0.35 ? 2 : 1
+    const chosen = new Set<string>()
+    for (let k = 0; k < nTracks; k++) {
+      const t = GEN_TRACK_IDS[Math.floor(s.rand() * GEN_TRACK_IDS.length)]
+      if (chosen.has(t)) continue
+      chosen.add(t)
+      const pool = instructorByOrg[s.orgId]
+      enrollments.push({
+        id: `enr_g${enrCounter++}`,
+        studentId: s.id,
+        trackId: t,
+        orgId: s.orgId,
+        assignedBy: pool[Math.floor(s.rand() * pool.length)],
+        assignedAt: daysAgo(10 + Math.floor(s.rand() * 45)),
+        status: 'active',
+      })
+    }
+  }
+
   // Progress snapshots per enrolled student
   const progress: Database['progress'] = [
     {
@@ -234,17 +322,22 @@ export function buildSeedDatabase(): Database {
       topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
     },
     {
-      studentId: 'stu_demo', trackId: 'track_phleb',
+      studentId: 'stu_demo', trackId: 'track_itsupport',
       completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
       topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
     },
     {
-      studentId: 'stu_demo', trackId: 'track_cla',
+      studentId: 'stu_demo', trackId: 'track_cyberfound',
       completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
       topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
     },
     {
-      studentId: 'stu_demo', trackId: 'track_amt',
+      studentId: 'stu_demo', trackId: 'track_p107',
+      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
+      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
+    },
+    {
+      studentId: 'stu_demo', trackId: 'track_robotics',
       completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
       topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
     },
@@ -451,6 +544,39 @@ export function buildSeedDatabase(): Database {
     },
   ]
 
+  // Generated progress for generated enrollments (deterministic).
+  const domainsByTrack = new Map(TRACKS.map((t) => [t.id, t.domains ?? []]))
+  for (const e of enrollments.filter((en) => en.id.startsWith('enr_g'))) {
+    const stu = genStudents.find((s) => s.id === e.studentId)!
+    const r = stu.rand
+    const domains = domainsByTrack.get(e.trackId) ?? []
+    const short = e.trackId.replace(/^track_/, '')
+    const activity = r()
+    const lessonsDone = activity < 0.15 ? 0 : 2 + Math.floor(r() * 15)
+    const topicStats: Record<string, { attempted: number; correct: number }> = {}
+    const nTopics = Math.min(domains.length, 2 + Math.floor(r() * 6))
+    for (let k = 0; k < nTopics; k++) {
+      const d = domains[Math.floor(r() * domains.length)]
+      if (!d || topicStats[d]) continue
+      const attempted = 4 + Math.floor(r() * 12)
+      const correct = Math.max(0, Math.min(attempted, Math.round(attempted * (0.3 + r() * 0.6))))
+      topicStats[d] = { attempted, correct }
+    }
+    const completed = Object.values(topicStats).reduce((a, b) => a + b.attempted, 0)
+    const correctTotal = Object.values(topicStats).reduce((a, b) => a + b.correct, 0)
+    progress.push({
+      studentId: e.studentId,
+      trackId: e.trackId,
+      completedLessonIds: pickLessons(LESSONS, `mod_${short}_`, lessonsDone),
+      practiceQuestionsCompleted: completed,
+      practiceQuestionsCorrect: correctTotal,
+      topicStats,
+      finalPracticeScorePct: activity > 0.6 ? 58 + Math.floor(r() * 36) : null,
+      diagnosticBaselinePct: activity > 0.2 ? 28 + Math.floor(r() * 32) : null,
+      lastActivityAt: daysAgo(Math.floor(r() * 14)),
+    })
+  }
+
   // A few completed attempts to anchor diagnostics / final tests
   const attempts: Database['attempts'] = []
   const attemptFor = (
@@ -492,6 +618,15 @@ export function buildSeedDatabase(): Database {
   attemptFor('att_018', 'asm_cla_diag', 'stu_nv_06', 'track_cla', 35, 37)
   attemptFor('att_019', 'asm_amt_diag', 'stu_sm_01', 'track_amt', 44, 17)
   attemptFor('att_020', 'asm_amt_diag', 'stu_sm_03', 'track_amt', 33, 14)
+
+  // Diagnostic attempts for generated students who have taken the baseline.
+  let attCounter = 100
+  for (const p of progress.filter((pr) => pr.studentId.startsWith('stu_') && pr.studentId.includes('_g') && pr.diagnosticBaselinePct !== null)) {
+    const short = p.trackId.replace(/^track_/, '')
+    const asmId = `asm_${short}_diag`
+    if (!ASSESSMENTS.some((a) => a.id === asmId)) continue
+    attemptFor(`att_g${attCounter++}`, asmId, p.studentId, p.trackId, p.diagnosticBaselinePct!, 12 + (attCounter % 30))
+  }
 
   const auditLogs: Database['auditLogs'] = [
     { id: 'log_001', actorId: 'user_super', actorName: 'Platform Admin', action: 'subscription.created', detail: 'Program License activated for Summit Workforce School via invoice INV-1042', orgId: 'org_summit', createdAt: daysAgo(58) },

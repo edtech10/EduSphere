@@ -62,7 +62,7 @@ export default function AdminDashboard() {
               Choose a cohort plan to unlock certification readiness tracking for your students.
             </p>
             <Button asChild>
-              <Link to="/checkout?plan=growth">View plans & activate</Link>
+              <Link to="/checkout?plan=field">View plans & activate</Link>
             </Button>
           </CardContent>
         </Card>

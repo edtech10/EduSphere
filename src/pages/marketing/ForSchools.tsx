@@ -13,6 +13,8 @@ import {
   Receipt,
   Accessibility as AccessibilityIcon,
   Lock,
+  ClipboardCheck,
+  ListChecks,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,15 +38,35 @@ const PAINS_AND_OUTCOMES = [
 const PROCUREMENT_ITEMS = [
   {
     icon: Download,
-    title: 'Sample readiness report (PDF)',
-    text: 'A sample student readiness report with fictional data — share it with program directors and funders.',
-    link: { href: '/reports/sample-student-readiness-report.pdf', label: 'Download sample report', external: true },
+    title: 'Sample readiness reports (PDF)',
+    text: 'Sample student and cohort readiness reports with fictional data — share them with program directors and funders.',
+    link: { href: '/reports/sample-student-readiness-report.pdf', label: 'Student report', external: true },
+    extraLink: { href: '/reports/sample-cohort-readiness-report.pdf', label: 'Cohort report' },
+  },
+  {
+    icon: FileBarChart,
+    title: 'Sample quote & invoice (PDF)',
+    text: 'The exact formats your purchasing office will receive — valid 90 days, PO-friendly.',
+    link: { href: '/reports/sample-quote.pdf', label: 'Sample quote', external: true },
+    extraLink: { href: '/reports/sample-invoice.pdf', label: 'Sample invoice' },
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Implementation plan (PDF)',
+    text: 'The standard four-week onboarding timeline from license activation to first readiness review.',
+    link: { href: '/reports/sample-implementation-plan.pdf', label: 'Download plan', external: true },
+  },
+  {
+    icon: ListChecks,
+    title: 'Vendor packet checklist (PDF)',
+    text: 'Every document a purchasing office typically needs — W-9, data protection, security, reports — and how purchasing works.',
+    link: { href: '/reports/vendor-packet-checklist.pdf', label: 'Download checklist', external: true },
   },
   {
     icon: Receipt,
     title: 'Quote & PO support',
     text: 'We work with purchase orders, district procurement workflows, and grant-funded purchases.',
-    link: { href: '/checkout?plan=growth', label: 'Request invoice / PO', external: false },
+    link: { href: '/checkout?plan=field', label: 'Request invoice / PO', external: false },
   },
   {
     icon: ShieldCheck,
@@ -202,6 +224,15 @@ export default function ForSchools() {
                     >
                       {item.link.label} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
+                  )}
+                  {'extraLink' in item && item.extraLink && (
+                    <a
+                      href={item.extraLink.href}
+                      download
+                      className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {item.extraLink.label} <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
                   )}
                 </CardContent>
               </Card>

@@ -37,7 +37,7 @@ export default function SuperOrganizations() {
   const [seatOrg, setSeatOrg] = useState<Organization | null>(null)
   const [seatValue, setSeatValue] = useState(0)
   const [licenseOrg, setLicenseOrg] = useState<Organization | null>(null)
-  const [licensePlan, setLicensePlan] = useState<PlanId>('starter')
+  const [licensePlan, setLicensePlan] = useState<PlanId>('single')
   const [licenseSeats, setLicenseSeats] = useState(10)
   const [newOrgOpen, setNewOrgOpen] = useState(false)
   const [newOrg, setNewOrg] = useState({
@@ -260,7 +260,7 @@ export default function SuperOrganizations() {
                         <Button variant="ghost" size="sm" onClick={() => openSeats(org)}>
                           <Pencil className="mr-1 h-3.5 w-3.5" /> Seats
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setLicenseOrg(org); setLicensePlan(sub?.planId ?? 'starter'); setLicenseSeats(seat?.totalSeats ?? 10) }}>
+                        <Button variant="ghost" size="sm" onClick={() => { setLicenseOrg(org); setLicensePlan(sub?.planId ?? 'single'); setLicenseSeats(seat?.totalSeats ?? 10) }}>
                           <CreditCard className="mr-1 h-3.5 w-3.5" /> License
                         </Button>
                         <Button

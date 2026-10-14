@@ -1,33 +1,37 @@
+// License plans. Single / Field / Program prices depend on the IRC field —
+// see data/pricing.ts for the matrix. Academy is flat; Enterprise is custom.
 import type { Plan, PlanId } from '@/lib/types'
 
 export const PLANS: Plan[] = [
   {
-    id: 'starter',
-    name: 'Starter Cohort',
-    priceAnnual: 14500,
+    id: 'single',
+    name: 'Single IRC Track License',
+    priceAnnual: null, // field-scoped: $7,500–$17,500
     maxStudents: 10,
     maxTracks: 1,
-    perStudentAtFullUse: 1450,
+    perStudentAtFullUse: null,
+    fieldScoped: true,
     features: [
       'Up to 10 students',
-      'One healthcare readiness track',
+      'One credential readiness track',
       'Student diagnostics',
-      'Practice question bank',
+      'Practice question bank with rationales',
       'Instructor dashboard',
       'Monthly readiness report',
     ],
   },
   {
-    id: 'growth',
-    name: 'Growth Cohort',
-    priceAnnual: 31500,
+    id: 'field',
+    name: 'Field License',
+    priceAnnual: null, // field-scoped: $22,500–$47,500
     maxStudents: 25,
-    maxTracks: 3,
-    perStudentAtFullUse: 1260,
+    maxTracks: 'all',
+    perStudentAtFullUse: null,
+    fieldScoped: true,
     features: [
       'Up to 25 students',
-      'Up to three healthcare readiness tracks',
-      'All Starter features',
+      'All readiness tracks in one IRC field',
+      'All Single Track features',
       'Remediation plans',
       'Cohort analytics',
       'Admin reporting',
@@ -37,13 +41,14 @@ export const PLANS: Plan[] = [
   {
     id: 'program',
     name: 'Program License',
-    priceAnnual: 59500,
+    priceAnnual: null, // field-scoped: $39,500–$89,500
     maxStudents: 60,
     maxTracks: 'all',
-    perStudentAtFullUse: 992,
+    perStudentAtFullUse: null,
+    fieldScoped: true,
     features: [
       'Up to 60 students',
-      'All healthcare readiness tracks',
+      'All readiness tracks in one IRC field',
       'Advanced analytics',
       'Multi-instructor access',
       'Quarterly readiness review',
@@ -51,17 +56,34 @@ export const PLANS: Plan[] = [
     ],
   },
   {
+    id: 'academy',
+    name: 'Career Academy License',
+    priceAnnual: 125000,
+    maxStudents: 150,
+    maxTracks: 'all',
+    perStudentAtFullUse: 833,
+    features: [
+      'Up to 150 students',
+      'Any 4 IRC fields',
+      'Implementation support',
+      'Quarterly readiness review',
+      'Admin reporting',
+      'Procurement packet',
+    ],
+  },
+  {
     id: 'enterprise',
-    name: 'Enterprise',
-    priceAnnual: null,
+    name: 'Enterprise License',
+    priceAnnual: null, // custom, starting at $175,000
     maxStudents: null,
     maxTracks: 'all',
     perStudentAtFullUse: null,
     features: [
       'Multi-campus access',
       'Custom reporting',
-      'Procurement support',
       'Dedicated success manager',
+      'Procurement support',
+      'Custom implementation plan',
     ],
   },
 ]
