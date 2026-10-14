@@ -263,11 +263,6 @@ export function buildSeedDatabase(): Database {
 
   // Enrollments
   const enrollments: Database['enrollments'] = [
-    { id: 'enr_001', studentId: 'stu_demo', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
-    { id: 'enr_001b', studentId: 'stu_demo', trackId: 'track_itsupport', orgId: 'org_northview', assignedBy: 'user_nv_inst3', assignedAt: daysAgo(40), status: 'active' },
-    { id: 'enr_001c', studentId: 'stu_demo', trackId: 'track_cyberfound', orgId: 'org_northview', assignedBy: 'user_nv_inst3', assignedAt: daysAgo(38), status: 'active' },
-    { id: 'enr_001d', studentId: 'stu_demo', trackId: 'track_p107', orgId: 'org_northview', assignedBy: 'user_sm_inst2', assignedAt: daysAgo(35), status: 'active' },
-    { id: 'enr_001e', studentId: 'stu_demo', trackId: 'track_robotics', orgId: 'org_northview', assignedBy: 'user_nv_inst4', assignedAt: daysAgo(33), status: 'active' },
     { id: 'enr_002', studentId: 'stu_nv_02', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(45), status: 'active' },
     { id: 'enr_003', studentId: 'stu_nv_03', trackId: 'track_ma', orgId: 'org_northview', assignedBy: 'user_nv_inst1', assignedAt: daysAgo(44), status: 'active' },
     { id: 'enr_004', studentId: 'stu_nv_04', trackId: 'track_phleb', orgId: 'org_northview', assignedBy: 'user_nv_inst2', assignedAt: daysAgo(40), status: 'active' },
@@ -288,6 +283,20 @@ export function buildSeedDatabase(): Database {
 
   // Generated enrollments: spread students across all 8 IRC fields.
   const GEN_TRACK_IDS = TRACKS.filter((t) => !t.isBundle).map((t) => t.id)
+
+  // The demo student is enrolled in every concrete track so evaluators can
+  // browse all lesson content, diagnostics, and finals from one account.
+  GEN_TRACK_IDS.forEach((t, i) => {
+    enrollments.push({
+      id: `enr_demo_${String(i + 1).padStart(2, '0')}`,
+      studentId: 'stu_demo',
+      trackId: t,
+      orgId: 'org_northview',
+      assignedBy: 'user_nv_inst1',
+      assignedAt: daysAgo(Math.max(5, 45 - i)),
+      status: 'active',
+    })
+  })
   const instructorByOrg: Record<string, string[]> = {
     org_northview: ['user_nv_inst1', 'user_nv_inst2', 'user_nv_inst3', 'user_nv_inst4'],
     org_harbor: ['user_hb_inst1', 'user_hb_inst2'],
@@ -316,31 +325,6 @@ export function buildSeedDatabase(): Database {
 
   // Progress snapshots per enrolled student
   const progress: Database['progress'] = [
-    {
-      studentId: 'stu_demo', trackId: 'track_ma',
-      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
-      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
-    },
-    {
-      studentId: 'stu_demo', trackId: 'track_itsupport',
-      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
-      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
-    },
-    {
-      studentId: 'stu_demo', trackId: 'track_cyberfound',
-      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
-      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
-    },
-    {
-      studentId: 'stu_demo', trackId: 'track_p107',
-      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
-      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
-    },
-    {
-      studentId: 'stu_demo', trackId: 'track_robotics',
-      completedLessonIds: [], practiceQuestionsCompleted: 0, practiceQuestionsCorrect: 0,
-      topicStats: {}, finalPracticeScorePct: null, diagnosticBaselinePct: null, lastActivityAt: daysAgo(0),
-    },
     {
       studentId: 'stu_nv_02', trackId: 'track_ma',
       completedLessonIds: pickLessons(LESSONS, 'mod_ma_', 14),
@@ -543,6 +527,21 @@ export function buildSeedDatabase(): Database {
       finalPracticeScorePct: null, diagnosticBaselinePct: 33, lastActivityAt: daysAgo(4),
     },
   ]
+
+  // Fresh (empty) progress records for every demo-student enrollment.
+  for (const e of enrollments.filter((en) => en.id.startsWith('enr_demo_'))) {
+    progress.push({
+      studentId: 'stu_demo',
+      trackId: e.trackId,
+      completedLessonIds: [],
+      practiceQuestionsCompleted: 0,
+      practiceQuestionsCorrect: 0,
+      topicStats: {},
+      finalPracticeScorePct: null,
+      diagnosticBaselinePct: null,
+      lastActivityAt: daysAgo(0),
+    })
+  }
 
   // Generated progress for generated enrollments (deterministic).
   const domainsByTrack = new Map(TRACKS.map((t) => [t.id, t.domains ?? []]))
