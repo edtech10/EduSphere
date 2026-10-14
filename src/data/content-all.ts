@@ -15,6 +15,7 @@ import { TECH_COMPACT } from './catalog-tech'
 import { BUSINESS_COMPACT } from './catalog-business'
 import { AUTO_COMPACT } from './catalog-auto'
 import { buildExtraQuestions } from './questions-flagship'
+import { deriveAllBoosts } from './questions-derive'
 
 // Expand generated catalogs.
 const health = expandAll(HEALTH_SPECS)
@@ -31,13 +32,18 @@ const handAuthored = BASE_TRACKS.map((t) => {
 export const ALL_TRACKS = [...handAuthored, ...health.tracks, ...tech.tracks, ...business.tracks, ...auto.tracks]
 export const ALL_MODULES = [...BASE_MODULES, ...health.modules, ...tech.modules, ...business.modules, ...auto.modules]
 export const ALL_LESSONS = [...BASE_LESSONS, ...health.lessons, ...tech.lessons, ...business.lessons, ...auto.lessons]
-export const ALL_QUESTIONS = [
+const CORE_QUESTIONS = [
   ...BASE_QUESTIONS,
   ...health.questions,
   ...tech.questions,
   ...business.questions,
   ...auto.questions,
   ...buildExtraQuestions([...handAuthored, ...health.tracks, ...tech.tracks, ...business.tracks, ...auto.tracks]),
+]
+// Derived concept-check boost brings every published track to a 30-question floor.
+export const ALL_QUESTIONS = [
+  ...CORE_QUESTIONS,
+  ...deriveAllBoosts(ALL_TRACKS, ALL_LESSONS, CORE_QUESTIONS, 30),
 ]
 export const ALL_ASSESSMENTS = [
   ...BASE_ASSESSMENTS,

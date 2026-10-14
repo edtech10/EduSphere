@@ -10,7 +10,7 @@ import { pct } from '@/lib/format'
 import type { Database } from '@/lib/types'
 import { ReadinessBadge } from '@/components/StatusBadge'
 import { ActivityPlayer } from '@/components/activities/ActivityPlayer'
-import { activitiesForTrack } from '@/data/activities'
+import { fullActivitiesForTrack } from '@/data/activities'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -89,7 +89,10 @@ export default function TrackDetail() {
     ),
   )
 
-  const trackActivities = activitiesForTrack(track.id)
+  const trackActivities = fullActivitiesForTrack(
+    track.id,
+    db.questions.filter((q) => q.trackId === track.id),
+  )
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

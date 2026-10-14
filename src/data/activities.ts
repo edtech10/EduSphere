@@ -1,7 +1,7 @@
 // Interactive activities ("simulations") for flagship tracks.
 // All content is original and credential-aligned; activities are rendered by
 // generic players in components/activities/.
-import type { Activity } from '@/lib/types'
+import type { Activity, Question } from '@/lib/types'
 
 export const ACTIVITIES: Activity[] = [
   // ---------- Clinical Laboratory Assisting (track_cla) ----------
@@ -753,4 +753,51 @@ export function activitiesForTrack(trackId: string): Activity[] {
 
 export function getActivity(id: string): Activity | undefined {
   return ACTIVITIES.find((a) => a.id === id)
+}
+
+/**
+ * Fallback review drills for tracks without hand-authored activities.
+ * Groups the track's own bank questions by topic into rapid review quizzes,
+ * so every track has interactive practice. Deterministic output.
+ */
+export function fallbackActivitiesForTrack(trackId: string, questions: Question[]): Activity[] {
+  const byTopic = new Map<string, Question[]>()
+  for (const q of questions.filter((x) => x.type === 'multiple_choice' || x.type === 'scenario' || x.type === 'true_false')) {
+    const arr = byTopic.get(q.topic) ?? []
+    arr.push(q)
+    byTopic.set(q.topic, arr)
+  }
+  const short = trackId.replace(/^track_/, '')
+  const out: Activity[] = []
+  let n = 0
+  for (const [topic, qs] of byTopic) {
+    for (let i = 0; i + 3 < qs.length && out.length < 6; i += 4) {
+      const chunk = qs.slice(i, i + 4)
+      n += 1
+      out.push({
+        id: `act_${short}_review_${String(n).padStart(2, '0')}`,
+        trackId,
+        moduleId: chunk[0]?.moduleId ?? null,
+        title: `Rapid review drill — ${topic}`,
+        type: 'review_quiz',
+        instructions: `Four rapid questions on ${topic.toLowerCase()}. Answer all four, then review the rationales.`,
+        difficulty: 'medium',
+        estMinutes: 3,
+        questions: chunk.map((q) => ({
+          q: q.text,
+          choices: q.choices,
+          answer: q.correctIndex,
+          why: q.explanation,
+        })),
+      })
+    }
+    if (out.length >= 6) break
+  }
+  return out
+}
+
+/** Hand-authored activities if present, otherwise generated review drills. */
+export function fullActivitiesForTrack(trackId: string, questions: Question[]): Activity[] {
+  const handAuthored = activitiesForTrack(trackId)
+  return handAuthored.length > 0 ? handAuthored : fallbackActivitiesForTrack(trackId, questions)
 }

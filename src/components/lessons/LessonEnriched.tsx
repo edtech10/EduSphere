@@ -1,9 +1,10 @@
 // Rich lesson renderer: objective → scenario → core teaching (LessonBody) →
 // visual explanation → interactive activity → vocabulary → common mistakes →
 // quick check → remediation → instructor notes → worksheet.
-import { AlertTriangle, BookOpen, Eye, FileText, GraduationCap, Lightbulb, Target } from 'lucide-react'
+import { AlertTriangle, BookOpen, FileText, GraduationCap, Lightbulb, Target } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { LessonBody } from '@/components/LessonBody'
+import { LessonDiagram } from '@/components/lessons/LessonDiagram'
 import { ActivityPlayer, QuickCheck } from '@/components/activities/ActivityPlayer'
 import { getLessonEnrichment } from '@/data/enrichment'
 import { getActivity } from '@/data/activities'
@@ -46,14 +47,13 @@ export function LessonEnriched({
       {/* Core teaching content */}
       <LessonBody lesson={lesson} />
 
-      {/* Visual explanation */}
-      <div className="rounded-md border border-violet-200 bg-violet-50/50 p-4">
-        <div className="flex items-center gap-2">
-          <Eye className="h-4 w-4 text-violet-700" />
-          <p className="text-sm font-semibold text-violet-900">{en.visual.title}</p>
-        </div>
-        <p className="mt-1.5 text-sm text-violet-900/85">{en.visual.description}</p>
-      </div>
+      {/* Visual explanation — a real rendered concept map */}
+      <LessonDiagram
+        title={en.visual.title}
+        points={lesson.keyPoints}
+        color={track.color}
+        caption={en.visual.description}
+      />
 
       {/* Interactive activity */}
       {activity && (

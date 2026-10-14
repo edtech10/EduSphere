@@ -9,8 +9,9 @@ import { useAuth } from '@/lib/auth'
 import { useDB, updateDB, logAction, uid } from '@/lib/db'
 import { getField } from '@/data/fields'
 import {
-  getTrackQA, STATUS_META, RESOURCE_TYPE_META, resourcesForTrack, activitiesForTrack,
+  getTrackQA, STATUS_META, RESOURCE_TYPE_META, resourcesForTrack,
 } from '@/data/enrichment'
+import { fullActivitiesForTrack } from '@/data/activities'
 import { qualityScore, trackStats, qualityBadgeClass } from './SuperContent'
 import { ActivityPlayer } from '@/components/activities/ActivityPlayer'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -189,7 +190,10 @@ export default function SuperTrackDetail() {
   const diagnostic = db.assessments.find((a) => a.trackId === track.id && a.kind === 'diagnostic')
   const checks = db.assessments.filter((a) => a.trackId === track.id && a.kind === 'knowledge_check')
   const timedFinal = db.assessments.find((a) => a.trackId === track.id && a.kind === 'timed_final')
-  const activities = activitiesForTrack(track.id)
+  const activities = fullActivitiesForTrack(
+    track.id,
+    db.questions.filter((q) => q.trackId === track.id),
+  )
   const resources = resourcesForTrack(track)
   const lessonMinutes = lessons.reduce((s, l) => s + l.durationMin, 0)
   const assessMinutes = Math.round(

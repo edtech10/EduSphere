@@ -9,6 +9,7 @@ import {
 import { useDB } from '@/lib/db'
 import { FIELDS, getField } from '@/data/fields'
 import { ACTIVITIES, getTrackQA, STATUS_META, resourcesForTrack, type TrackQA } from '@/data/enrichment'
+import { fullActivitiesForTrack } from '@/data/activities'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,12 +36,13 @@ export interface TrackStats {
 export function trackStats(db: Database, track: CredentialTrack): TrackStats {
   const modules = db.modules.filter((m) => m.trackId === track.id)
   const moduleIds = new Set(modules.map((m) => m.id))
+  const trackQuestions = db.questions.filter((q) => q.trackId === track.id)
   return {
     modules: modules.length,
     lessons: db.lessons.filter((l) => moduleIds.has(l.moduleId)).length,
-    questions: db.questions.filter((q) => q.trackId === track.id).length,
+    questions: trackQuestions.length,
     assessments: db.assessments.filter((a) => a.trackId === track.id).length,
-    activities: ACTIVITIES.filter((a) => a.trackId === track.id).length,
+    activities: fullActivitiesForTrack(track.id, trackQuestions).length,
     resources: resourcesForTrack(track).length,
   }
 }

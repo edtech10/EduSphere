@@ -246,8 +246,8 @@ export function enrichLesson(lesson: Lesson, track: CredentialTrack, moduleTitle
     objective: `By the end of this lesson you can explain and apply: ${flat.slice(0, 2).join('; ').toLowerCase()}.`,
     scenario: SCENARIO_OPENERS[h % SCENARIO_OPENERS.length](track.shortName, lesson.title),
     visual: {
-      title: `Visual map — ${lesson.title}`,
-      description: `Picture a labeled diagram of ${lesson.title.toLowerCase()}: ${lesson.keyPoints.slice(0, 3).join('; ').toLowerCase()}. ${VISUAL_SUFFIXES[h % VISUAL_SUFFIXES.length]}`,
+      title: `Concept map — ${lesson.title}`,
+      description: `The map above lays out ${lesson.title.toLowerCase()} as linked ideas: ${lesson.keyPoints.slice(0, 3).join('; ').toLowerCase()}. ${VISUAL_SUFFIXES[h % VISUAL_SUFFIXES.length]}`,
     },
     activityId: activity?.id,
     vocabulary,
@@ -268,7 +268,7 @@ const LESSON_OVERRIDES: Record<string, Partial<LessonEnrichment>> = {
     visual: {
       title: 'The order-of-draw rack',
       description:
-        'Picture six tubes lined up by cap color: yellow/sterile first, light blue citrate next, then red and gold serum tubes, green heparin, lavender EDTA, and gray fluoride last. Additives never travel backward in the sequence. Trace the line left to right and say the rationale for each position.',
+        'Follow the map across the rack: yellow/sterile first, light blue citrate next, then red and gold serum tubes, green heparin, lavender EDTA, and gray fluoride last. Additives never travel backward in the sequence. Trace the line left to right and say the rationale for each position.',
     },
     activityId: 'act_cla_order_of_draw',
     vocabulary: [
@@ -310,7 +310,7 @@ const LESSON_OVERRIDES: Record<string, Partial<LessonEnrichment>> = {
     visual: {
       title: 'The two-identifier checkpoint',
       description:
-        'Picture a three-way match: the spoken answers (name and date of birth), the wristband, and the requisition — all three must agree before a needle is uncapped. Room numbers, bed labels, and "the nurse said so" are never identifiers.',
+        'The map shows the three-way match: the spoken answers (name and date of birth), the wristband, and the requisition — all three must agree before a needle is uncapped. Room numbers, bed labels, and "the nurse said so" are never identifiers.',
     },
     activityId: 'act_cla_patient_id',
     vocabulary: [
@@ -346,7 +346,7 @@ const LESSON_OVERRIDES: Record<string, Partial<LessonEnrichment>> = {
     visual: {
       title: 'Anatomy of a METAR',
       description:
-        'Picture the report segmented into colored blocks: station identifier, observation time, wind group, visibility, present weather, sky condition, temperature/dew point, altimeter. Each block answers one operational question: where, when, wind, how far you can see, what is falling, where the clouds are, and pressure.',
+        'Read the report block by block, as mapped above: station identifier, observation time, wind group, visibility, present weather, sky condition, temperature/dew point, altimeter. Each block answers one operational question: where, when, wind, how far you can see, what is falling, where the clouds are, and pressure.',
     },
     activityId: 'act_p107_metar',
     vocabulary: [
@@ -389,7 +389,7 @@ const LESSON_OVERRIDES: Record<string, Partial<LessonEnrichment>> = {
     visual: {
       title: 'Reading the sectional',
       description:
-        'Picture the chart: solid blue circles mark Class D towers, solid magenta marks Class E to the surface, dashed magenta marks Class E starting at 700 ft AGL. Everything unmarked below those floors is Class G. Locate your site, find the floor of controlled airspace above it, and your authorization question answers itself.',
+        'On the chart: solid blue circles mark Class D towers, solid magenta marks Class E to the surface, dashed magenta marks Class E starting at 700 ft AGL. Everything unmarked below those floors is Class G. Locate your site, find the floor of controlled airspace above it, and your authorization question answers itself.',
     },
     activityId: 'act_p107_airspace',
     vocabulary: [
