@@ -5,6 +5,7 @@ import { AlertTriangle, BookOpen, FileText, GraduationCap, Lightbulb, Target } f
 import { Badge } from '@/components/ui/badge'
 import { LessonBody } from '@/components/LessonBody'
 import { LessonDiagram } from '@/components/lessons/LessonDiagram'
+import { AVIATION_VISUALS } from '@/components/lessons/AviationVisuals'
 import { ActivityPlayer, QuickCheck } from '@/components/activities/ActivityPlayer'
 import { getLessonEnrichment } from '@/data/enrichment'
 import { getActivity } from '@/data/activities'
@@ -47,13 +48,27 @@ export function LessonEnriched({
       {/* Core teaching content */}
       <LessonBody lesson={lesson} />
 
-      {/* Visual explanation — a real rendered concept map */}
-      <LessonDiagram
-        title={en.visual.title}
-        points={lesson.keyPoints}
-        color={track.color}
-        caption={en.visual.description}
-      />
+      {/* Visual explanation — purpose-built visuals when assigned, else the
+          generic concept map rendered from key points */}
+      {en.customVisuals && en.customVisuals.length > 0 ? (
+        en.customVisuals.map((key) => {
+          const Visual = AVIATION_VISUALS[key]
+          return Visual ? (
+            <Visual
+              key={key}
+              color={track.color}
+              caption={key === en.customVisuals![en.customVisuals!.length - 1] ? en.visual.description : undefined}
+            />
+          ) : null
+        })
+      ) : (
+        <LessonDiagram
+          title={en.visual.title}
+          points={lesson.keyPoints}
+          color={track.color}
+          caption={en.visual.description}
+        />
+      )}
 
       {/* Interactive activity */}
       {activity && (

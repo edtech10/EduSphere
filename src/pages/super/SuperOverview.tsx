@@ -11,6 +11,7 @@ import {
 import { useDB } from '@/lib/db'
 import { computeReadiness } from '@/lib/scoring'
 import { getPlan } from '@/data/plans'
+import { priceFor, type LicenseTypeId } from '@/data/pricing'
 import { formatUSD, formatDate } from '@/lib/format'
 import { StatCard } from '@/components/StatCard'
 import { PaymentStatusBadge } from '@/components/StatusBadge'
@@ -28,7 +29,13 @@ export default function SuperOverview() {
 
   const totalOrgs = db.organizations.length
   const activeSubs = db.subscriptions.filter((s) => s.status === 'active' || s.status === 'trialing')
-  const arr = activeSubs.reduce((sum, s) => sum + (getPlan(s.planId).priceAnnual ?? 0), 0)
+  const arr = activeSubs.reduce((sum, s) => {
+    const plan = getPlan(s.planId)
+    // Field-scoped plans price from the field matrix; enterprise is custom
+    // and excluded from ARR (reported via collected revenue instead).
+    if (plan.fieldScoped) return sum + priceFor(s.planId as LicenseTypeId, s.fieldId ?? 'healthcare')
+    return sum + (plan.priceAnnual ?? 0)
+  }, 0)
   const revenueCollected = db.payments
     .filter((p) => p.status === 'succeeded')
     .reduce((sum, p) => sum + p.amount, 0)

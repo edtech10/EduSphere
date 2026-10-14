@@ -216,6 +216,7 @@ export interface LessonEnrichment {
   objective: string
   scenario: string // real-world scenario that opens the lesson
   visual: { title: string; description: string } // visual explanation block (diagram described)
+  customVisuals?: string[] // purpose-built rendered visuals (registry in AviationVisuals.tsx); replaces the generic concept map when set
   activityId?: string // interactive activity rendered inline
   vocabulary: { term: string; definition: string }[]
   commonMistakes: string[]

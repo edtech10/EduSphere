@@ -1,18 +1,23 @@
-// EduSphere USA — Aviation Maintenance Technician (AMT) readiness track.
+// EduSphere USA — AMT General Readiness track.
 // Original content aligned with the General subject areas of aviation
 // maintenance technician certification under a Part 147 curriculum framework.
 // No FAA endorsement or partnership is claimed. All wording and questions
 // are original.
+//
+// Positioning: this is a General knowledge FOUNDATION readiness course, not a
+// full FAA knowledge-exam prep system. Deep randomized question banks and
+// multiple full-length timed practice exams per exam area are on the roadmap;
+// until then the track is positioned as "AMT General Readiness."
 
 import type { CredentialTrack, Module, Lesson, Question, Assessment } from '@/lib/types'
 
 export const AMT_TRACK: CredentialTrack = {
   id: 'track_amt',
-  name: 'Aviation Maintenance Technician Readiness',
-  shortName: 'Aviation Maintenance (AMT)',
+  name: 'AMT General Readiness',
+  shortName: 'AMT General',
   description:
-    'A credential-aligned program covering the General subject areas of aviation maintenance technician certification — regulations, mathematics, physics, electricity, drawings, weight and balance, materials, ground operations, and human factors — within a Part 147 curriculum framework.',
-  credentialFocus: 'Credential-aligned aviation maintenance technician General curriculum (Part 147 framework)',
+    'A knowledge-foundation readiness course covering the General subject areas of aviation maintenance technician training — regulations, mathematics, physics, electricity, drawings, weight and balance, materials, ground operations, and human factors — within a Part 147 curriculum framework. Builds the conceptual base for FAA knowledge-exam preparation; expanded randomized question banks and full-length timed practice exams per exam area are in active development.',
+  credentialFocus: 'General subject-area foundation within a Part 147-style aviation maintenance technician curriculum',
   estimatedWeeks: 16,
   color: '#4d7c0f',
   category: 'aviation',
@@ -1278,7 +1283,7 @@ export const AMT_ASSESSMENTS: Assessment[] = [
     trackId: 'track_amt',
     moduleId: null,
     kind: 'diagnostic',
-    title: 'Aviation Maintenance Technician Baseline Diagnostic',
+    title: 'AMT General Baseline Diagnostic',
     questionIds: ['q_amt_01', 'q_amt_02', 'q_amt_03', 'q_amt_04', 'q_amt_05', 'q_amt_06', 'q_amt_07', 'q_amt_08'],
     timeLimitMin: 25,
   },
@@ -1287,7 +1292,7 @@ export const AMT_ASSESSMENTS: Assessment[] = [
     trackId: 'track_amt',
     moduleId: null,
     kind: 'timed_final',
-    title: 'Aviation Maintenance Technician Timed Final Practice Test',
+    title: 'AMT General Timed Practice Test',
     questionIds: ['q_amt_05', 'q_amt_06', 'q_amt_07', 'q_amt_08', 'q_amt_09', 'q_amt_10', 'q_amt_11', 'q_amt_12'],
     timeLimitMin: 30,
   },

@@ -108,12 +108,12 @@ export const EXISTING_TRACK_META: Record<string, Partial<CredentialTrack>> = {
   },
   track_amt: {
     schoolOverview:
-      'Aviation maintenance General knowledge readiness within a Part 147-style curriculum framework — regulations, math, physics, electricity, drawings, weight and balance, materials, ground operations, and human factors.',
+      'AMT General Readiness — a General subject-area knowledge foundation within a Part 147-style curriculum framework: regulations, math, physics, electricity, drawings, weight and balance, materials, ground operations, and human factors. Positioned as readiness for further exam preparation, with deep randomized banks and full-length timed practice exams per exam area on the content roadmap.',
     studentOverview:
-      'Master the General subject areas every aviation maintenance technician builds on — with drills, scenarios, and a timed final practice test.',
+      'Build the General knowledge foundation every aviation maintenance technician relies on — regulations, math, physics, electricity, drawings, weight and balance, and human factors — with drills, scenarios, real aviation visuals, and a timed practice test.',
     prerequisites: 'None. Algebra fundamentals recommended for the mathematics module.',
     alignmentNotes:
-      'Mapped to the General subject areas of aviation maintenance technician certification within a Part 147-style curriculum framework.',
+      'Mapped to the General subject areas of aviation maintenance technician training within a Part 147-style curriculum framework. This is a knowledge-foundation readiness course; it is not a substitute for an FAA-certificated Part 147 program or full knowledge-exam preparation.',
     domains: [
       'Regulations and Maintenance Publications', 'Mathematics for Aviation', 'Physics Fundamentals',
       'Basic Electricity', 'Aircraft Drawings and Schematics', 'Weight and Balance',

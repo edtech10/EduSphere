@@ -2,6 +2,7 @@
 // the rich lesson model. Defaults are deterministic; super admin QA edits are
 // persisted onto db.tracks and override these.
 import type {
+  Activity,
   ContentStatus,
   CredentialTrack,
   InstructorResource,
@@ -230,6 +231,55 @@ const INSTRUCTOR_NOTE_TEMPLATES = [
   'If time is short, prioritize the key points and the quick check over a second read-through.',
 ]
 
+// ---------- Lesson ↔ activity matching ----------
+
+const ACTIVITY_STOPWORDS = new Set([
+  'activity', 'drill', 'check', 'review', 'practice', 'each', 'with', 'from',
+  'that', 'this', 'your', 'their', 'match', 'choose', 'every', 'correct',
+  'describe', 'described', 'based', 'into', 'what', 'when', 'which', 'lesson',
+  'module', 'scene', 'answer', 'proper', 'they', 'them', 'then', 'than',
+  'have', 'will', 'would', 'could', 'should', 'about', 'after',
+])
+
+function keywordTokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !ACTIVITY_STOPWORDS.has(w))
+    .map((w) => (w.endsWith('s') && w.length > 4 ? w.slice(0, -1) : w))
+}
+
+/** Pick the track activity whose wording best matches this lesson and module.
+ *  Requires at least two shared distinctive tokens; returns undefined when
+ *  nothing matches — no inline activity is better than a mismatched one.
+ *  Ties break deterministically on the lesson id. */
+function pickActivityForLesson(
+  lesson: Lesson,
+  track: CredentialTrack,
+  moduleTitle: string,
+): Activity | undefined {
+  const candidates = activitiesForTrack(track.id)
+  if (candidates.length === 0) return undefined
+  const lessonTokens = new Set(keywordTokens(`${lesson.title} ${moduleTitle}`))
+  let best: Activity[] = []
+  let bestScore = 0
+  for (const act of candidates) {
+    const actTokens = new Set(keywordTokens(`${act.title} ${act.instructions}`))
+    let score = 0
+    actTokens.forEach((t) => {
+      if (lessonTokens.has(t)) score += 1
+    })
+    if (score > bestScore) {
+      bestScore = score
+      best = [act]
+    } else if (score === bestScore && score > 0) {
+      best.push(act)
+    }
+  }
+  if (bestScore < 2) return undefined
+  return best[hashStr(lesson.id) % best.length]
+}
+
 /** Deterministically build the rich lesson model from existing lesson content. */
 export function enrichLesson(lesson: Lesson, track: CredentialTrack, moduleTitle: string): LessonEnrichment {
   const h = hashStr(lesson.id)
@@ -240,8 +290,7 @@ export function enrichLesson(lesson: Lesson, track: CredentialTrack, moduleTitle
     const words = kp.split(' ')
     return { term: words.slice(0, 3).join(' '), definition: kp }
   })
-  const activities = activitiesForTrack(track.id)
-  const activity = activities.length > 0 ? activities[h % activities.length] : undefined
+  const activity = pickActivityForLesson(lesson, track, moduleTitle)
   return {
     objective: `By the end of this lesson you can explain and apply: ${flat.slice(0, 2).join('; ').toLowerCase()}.`,
     scenario: SCENARIO_OPENERS[h % SCENARIO_OPENERS.length](track.shortName, lesson.title),
@@ -417,6 +466,60 @@ const LESSON_OVERRIDES: Record<string, Partial<LessonEnrichment>> = {
       'Project a sectional excerpt and have students point to the airspace at three different sites. Chart-reading is spatial — it needs practice, not memorization.',
     worksheet:
       'Printable worksheet — "Airspace at a Glance": chart excerpts with three sites to classify and an authorization decision for each.',
+  },
+
+  // ---------- AMT General Readiness — purpose-built aviation visuals ----------
+  les_amt_01_1: {
+    customVisuals: ['inspection-tree'],
+    visual: {
+      title: 'Which inspection applies?',
+      description:
+        'Work the tree top to bottom: the annual is calendar-driven, the 100-hour is use-driven (for hire or flight instruction), and airworthiness directives run on their own mandatory schedule regardless of the inspection cycle. An approved progressive inspection program can replace the annual / 100-hour pattern.',
+    },
+  },
+  les_amt_01_2: {
+    customVisuals: ['manual-layout', 'logbook-entry'],
+    visual: {
+      title: 'Publications and records, up close',
+      description:
+        'Above: how a real maintenance-manual page is organized — ATA block numbers, effectivity, revision, ordered steps, and warning boxes — and how a compliant record entry is built: description of work, completion date, signature with certificate number, and the return-to-service statement. Approved data and proper records are the two halves of every maintenance task.',
+    },
+    activityId: 'act_amt_logbook',
+  },
+  les_amt_05_2: {
+    customVisuals: ['wiring-diagram'],
+    visual: {
+      title: 'Reading a simple aircraft wiring diagram',
+      description:
+        'Trace the circuit: battery to fuse to switch to load to structure ground. Circled codes are wire identification numbers, the switch is drawn in its normal (off) position, and the ground symbol means the return path runs through the airframe. Function first, physical layout second — that is what separates a schematic from an installation drawing.',
+    },
+    activityId: 'act_amt_wiring',
+  },
+  les_amt_06_1: {
+    customVisuals: ['wb-sheet'],
+    visual: {
+      title: 'Worked weight-and-balance sheet',
+      description:
+        'Every loading problem is this table: weight times arm equals moment, sum the columns, and divide total moment by total weight for the CG. The answer only matters when compared against the envelope in the POH — a number without its limits is not a decision.',
+    },
+  },
+  les_amt_06_2: {
+    customVisuals: ['wb-sheet'],
+    visual: {
+      title: 'Worked weight-and-balance sheet',
+      description:
+        'The same sheet, now as computation practice: build each moment (weight × arm), total both columns, and compute CG = total moment ÷ total weight. Then check the result against the published CG range before calling the loading acceptable.',
+    },
+    activityId: 'act_amt_wb_calc',
+  },
+  les_amt_07_1: {
+    activityId: 'act_amt_tools', // tool identification pairs naturally with materials & hardware
+  },
+  les_amt_08_1: {
+    activityId: 'act_amt_ground_safety', // ramp-hazard spotting for the ground handling lesson
+  },
+  les_amt_10_1: {
+    activityId: 'act_amt_review', // general knowledge review for the readiness checklist
   },
 }
 

@@ -433,8 +433,8 @@ export const ACTIVITIES: Activity[] = [
   },
   {
     id: 'act_amt_review', trackId: 'track_amt', moduleId: null,
-    title: 'FAA-Style Knowledge Review', type: 'review_quiz',
-    instructions: 'Original General-area review questions in certification style.',
+    title: 'General Knowledge Review', type: 'review_quiz',
+    instructions: 'Original General-area review questions drawn from this track’s subject areas.',
     difficulty: 'medium', estMinutes: 6,
     questions: [
       { q: 'Which publication lists the required inspections for a specific aircraft?', choices: ['The pilot operating handbook only', 'The manufacturer’s maintenance manual and applicable regulations', 'A magazine article', 'The fueling guide'], answer: 1, why: 'Inspection requirements come from approved manufacturer data and the regulations.' },
